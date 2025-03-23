@@ -5,14 +5,14 @@ import { getStorage } from 'firebase/storage';
 // Tu configuración de Firebase
 // NOTA: Deberás reemplazar estos valores con tu propia configuración de Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyDIlQ0X4po5VN-XLJmUJxKKyRbEQiLnSpc",
-  authDomain: "facturas-electronicas-app.firebaseapp.com",
-  databaseURL: "https://facturas-electronicas-app-default-rtdb.firebaseio.com",
-  projectId: "facturas-electronicas-app",
-  storageBucket: "facturas-electronicas-app.firebasestorage.app",
-  messagingSenderId: "425503865175",
-  appId: "1:425503865175:web:59c1fefe4895305ffda612",
-  measurementId: "G-FFQ77DPW0S"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 // Inicializar Firebase
