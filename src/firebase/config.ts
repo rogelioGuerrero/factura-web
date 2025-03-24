@@ -4,15 +4,20 @@ import { getStorage } from 'firebase/storage';
 
 // Configuración de Firebase
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyBDefaultApiKey',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'default-project.firebaseapp.com',
-  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || 'https://default-project.firebaseio.com',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'default-project',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'default-project.appspot.com',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '123456789012',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:123456789012:web:abcdef1234567890',
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || 'G-ABCDEFGHIJ'
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'placeholder-api-key',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'placeholder-project.firebaseapp.com',
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || 'https://placeholder-project.firebaseio.com',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'placeholder-project',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'placeholder-project.appspot.com',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '000000000000',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:000000000000:web:0000000000000000',
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || 'G-0000000000'
 };
+
+// Verificar si las variables de entorno están configuradas
+if (!import.meta.env.VITE_FIREBASE_API_KEY || import.meta.env.VITE_FIREBASE_API_KEY === 'placeholder-api-key') {
+  console.warn('¡ADVERTENCIA! Variables de entorno de Firebase no configuradas correctamente. La aplicación no funcionará como se espera.');
+}
 
 // Mostrar información de configuración (sin mostrar claves sensibles)
 console.log('Configuración de Firebase:', {
