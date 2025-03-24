@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "postbuild": "echo '/* /index.html 200' > dist/_redirects",
+    "postbuild-win": "echo /* /index.html 200 > dist\\_redirects",
     "lint": "eslint .",
     "preview": "vite preview"
   },

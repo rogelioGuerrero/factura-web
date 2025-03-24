@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fondo del logo -->
+  <rect width="200" height="60" rx="8" fill="#2196F3" />
+  
+  <!-- Icono de factura -->
+  <path d="M40 15C38.9 15 38 15.9 38 17V43C38 44.1 38.9 45 40 45H60C61.1 45 62 44.1 62 43V17C62 15.9 61.1 15 60 15H40ZM40 17H60V43H40V17Z" fill="white"/>
+  <path d="M44 22H56V24H44V22Z" fill="white"/>
+  <path d="M44 27H56V29H44V27Z" fill="white"/>
+  <path d="M44 32H56V34H44V32Z" fill="white"/>
+  <path d="M44 37H52V39H44V37Z" fill="white"/>
+  
+  <!-- Texto "Facturación" -->
+  <path d="M75 25H79V37H75V25Z" fill="white"/>
+  <path d="M81 25H85L89 33V25H93V37H89L85 29V37H81V25Z" fill="white"/>
+  <path d="M95 25H107V28H99V30H105V33H99V37H95V25Z" fill="white"/>
+  <path d="M109 25H121V28H113V29H119V32H113V34H121V37H109V25Z" fill="white"/>
+  <path d="M123 25H127V34H135V37H123V25Z" fill="white"/>
+  <path d="M137 25H149V28H141V30H147V33H141V37H137V25Z" fill="white"/>
+  <path d="M151 25H163V28H155V29H161V32H155V34H163V37H151V25Z" fill="white"/>
+  
+  <!-- Efecto de brillo -->
+  <path d="M40 15L60 15C61.1 15 62 15.9 62 17V20C62 18.9 61.1 18 60 18H40C38.9 18 38 18.9 38 20V17C38 15.9 38.9 15 40 15Z" fill="white" fill-opacity="0.3"/>
+</svg>

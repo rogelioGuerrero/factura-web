@@ -91,6 +91,22 @@
 .navbar-logo {
   height: 40px;
   margin-right: 1rem;
+  transition: transform 0.3s ease;
+}
+
+.navbar-logo:hover {
+  transform: scale(1.05);
+}
+
+.text-logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #2196f3;
+  margin-right: 1rem;
+}
+
+.navbar-dark .text-logo {
+  color: #64b5f6;
 }
 
 /* Menú principal */

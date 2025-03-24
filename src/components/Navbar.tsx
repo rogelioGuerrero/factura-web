@@ -123,7 +123,16 @@ const Navbar: React.FC<NavbarProps> = ({ onEditClick }) => {
         <div className="navbar-container">
           <div className="navbar-brand">
             <a href="/">
-              <img src="/logo.png" alt="Logo" className="navbar-logo" />
+              <img src="/logo.svg" alt="Logo" className="navbar-logo" onError={(e) => {
+                // Si hay error al cargar el logo, usar un texto como respaldo
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const parent = target.parentNode as HTMLElement;
+                const textLogo = document.createElement('span');
+                textLogo.className = 'text-logo';
+                textLogo.textContent = 'Facturación';
+                parent.appendChild(textLogo);
+              }} />
             </a>
           </div>
           <div className="navbar-loading">Cargando menú...</div>
@@ -154,7 +163,16 @@ const Navbar: React.FC<NavbarProps> = ({ onEditClick }) => {
         <div className="navbar-container">
           <div className="navbar-brand">
             <a href="/">
-              <img src="/logo.png" alt="Logo" className="navbar-logo" />
+              <img src="/logo.svg" alt="Logo" className="navbar-logo" onError={(e) => {
+                // Si hay error al cargar el logo, usar un texto como respaldo
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const parent = target.parentNode as HTMLElement;
+                const textLogo = document.createElement('span');
+                textLogo.className = 'text-logo';
+                textLogo.textContent = 'Facturación';
+                parent.appendChild(textLogo);
+              }} />
             </a>
             
             <button className="navbar-mobile-toggle" onClick={handleToggleMobileMenu}>
