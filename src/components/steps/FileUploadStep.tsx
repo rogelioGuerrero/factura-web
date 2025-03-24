@@ -11,6 +11,7 @@ interface FileUploadStepProps {
 const FileUploadStep = ({ onFileUpload, onPreview, onViewData, data }: FileUploadStepProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<InvoiceData[]>([]);
   const [fileNames, setFileNames] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -96,14 +97,23 @@ const FileUploadStep = ({ onFileUpload, onPreview, onViewData, data }: FileUploa
   };
 
   // Función para verificar si una factura ya existe
-  const invoiceExists = (newInvoice: InvoiceData): boolean => {
+  const invoiceExists = (newInvoice: InvoiceData, currentBatch: InvoiceData[] = []): boolean => {
     const newInvoiceCode = newInvoice.identificacion.codigoGeneracion;
-    return uploadedFiles.some(
+    
+    // Verificar en las facturas ya subidas
+    const existsInUploaded = uploadedFiles.some(
       existingInvoice => existingInvoice.identificacion.codigoGeneracion === newInvoiceCode
     );
+    
+    // Verificar en el lote actual de facturas que se están procesando
+    const existsInCurrentBatch = currentBatch.some(
+      batchInvoice => batchInvoice.identificacion.codigoGeneracion === newInvoiceCode
+    );
+    
+    return existsInUploaded || existsInCurrentBatch;
   };
 
-  const processFile = async (file: File) => {
+  const processFile = async (file: File, currentBatch: InvoiceData[] = []): Promise<{ success: boolean; isDuplicate: boolean; invoice: InvoiceData | null }> => {
     try {
       const text = await file.text();
       const jsonData = JSON.parse(text);
@@ -113,20 +123,27 @@ const FileUploadStep = ({ onFileUpload, onPreview, onViewData, data }: FileUploa
       }
       
       // Verificar si la factura ya existe
-      if (invoiceExists(jsonData)) {
+      if (invoiceExists(jsonData, currentBatch)) {
         console.warn(`Factura duplicada: ${jsonData.identificacion.codigoGeneracion}`);
-        setError(`La factura con código ${jsonData.identificacion.codigoGeneracion} ya ha sido cargada.`);
-        return false;
+        return { 
+          success: false, 
+          isDuplicate: true, 
+          invoice: jsonData 
+        };
       }
       
-      // Llamar a onFileUpload con solo el nuevo archivo
-      onFileUpload([jsonData]);
-      setError(null);
-      return true;
+      return { 
+        success: true, 
+        isDuplicate: false, 
+        invoice: jsonData 
+      };
     } catch (error) {
       console.error("Error al procesar archivo:", error);
-      setError('Error al procesar el archivo. Asegúrese de que sea un JSON válido.');
-      return false;
+      return { 
+        success: false, 
+        isDuplicate: false, 
+        invoice: null 
+      };
     }
   };
 
@@ -143,26 +160,51 @@ const FileUploadStep = ({ onFileUpload, onPreview, onViewData, data }: FileUploa
     }
     
     setError(null);
+    setSuccessMessage(null);
     
     // Procesar cada archivo
     let successCount = 0;
     let duplicateCount = 0;
     let errorCount = 0;
+    const validInvoices: InvoiceData[] = [];
+    const duplicateInvoices: string[] = [];
     
     for (const file of jsonFiles) {
-      const success = await processFile(file);
-      if (success) {
+      const result = await processFile(file, validInvoices);
+      
+      if (result.success && result.invoice) {
+        validInvoices.push(result.invoice);
         successCount++;
-      } else if (error && error.includes('ya ha sido cargada')) {
+      } else if (result.isDuplicate && result.invoice) {
         duplicateCount++;
+        duplicateInvoices.push(result.invoice.identificacion.codigoGeneracion);
       } else {
         errorCount++;
       }
     }
     
+    // Solo actualizar el estado si hay facturas válidas
+    if (validInvoices.length > 0) {
+      onFileUpload(validInvoices);
+    }
+    
     // Mostrar resumen si se procesaron múltiples archivos
     if (jsonFiles.length > 1) {
-      setError(`Procesamiento completado: ${successCount} archivos cargados, ${duplicateCount} duplicados, ${errorCount} con errores.`);
+      if (duplicateCount > 0) {
+        setError(`Procesamiento completado: ${successCount} archivos cargados, ${duplicateCount} duplicados (${duplicateInvoices.join(', ')}), ${errorCount} con errores.`);
+      } else if (errorCount > 0) {
+        setError(`Procesamiento completado: ${successCount} archivos cargados, ${errorCount} con errores.`);
+      } else {
+        setSuccessMessage(`Procesamiento completado: ${successCount} archivos cargados correctamente.`);
+      }
+    } else if (jsonFiles.length === 1) {
+      if (duplicateCount === 1) {
+        setError(`La factura con código ${duplicateInvoices[0]} ya ha sido cargada.`);
+      } else if (errorCount === 1) {
+        setError('Error al procesar el archivo. Asegúrese de que sea un JSON válido.');
+      } else if (successCount === 1) {
+        setSuccessMessage('Archivo cargado correctamente.');
+      }
     }
   };
 
@@ -172,21 +214,45 @@ const FileUploadStep = ({ onFileUpload, onPreview, onViewData, data }: FileUploa
       let successCount = 0;
       let duplicateCount = 0;
       let errorCount = 0;
+      const validInvoices: InvoiceData[] = [];
+      const duplicateInvoices: string[] = [];
       
       for (let i = 0; i < files.length; i++) {
-        const success = await processFile(files[i]);
-        if (success) {
+        const result = await processFile(files[i], validInvoices);
+        
+        if (result.success && result.invoice) {
+          validInvoices.push(result.invoice);
           successCount++;
-        } else if (error && error.includes('ya ha sido cargada')) {
+        } else if (result.isDuplicate && result.invoice) {
           duplicateCount++;
+          duplicateInvoices.push(result.invoice.identificacion.codigoGeneracion);
         } else {
           errorCount++;
         }
       }
       
+      // Solo actualizar el estado si hay facturas válidas
+      if (validInvoices.length > 0) {
+        onFileUpload(validInvoices);
+      }
+      
       // Mostrar resumen si se procesaron múltiples archivos
       if (files.length > 1) {
-        setError(`Procesamiento completado: ${successCount} archivos cargados, ${duplicateCount} duplicados, ${errorCount} con errores.`);
+        if (duplicateCount > 0) {
+          setError(`Procesamiento completado: ${successCount} archivos cargados, ${duplicateCount} duplicados (${duplicateInvoices.join(', ')}), ${errorCount} con errores.`);
+        } else if (errorCount > 0) {
+          setError(`Procesamiento completado: ${successCount} archivos cargados, ${errorCount} con errores.`);
+        } else {
+          setSuccessMessage(`Procesamiento completado: ${successCount} archivos cargados correctamente.`);
+        }
+      } else if (files.length === 1) {
+        if (duplicateCount === 1) {
+          setError(`La factura con código ${duplicateInvoices[0]} ya ha sido cargada.`);
+        } else if (errorCount === 1) {
+          setError('Error al procesar el archivo. Asegúrese de que sea un JSON válido.');
+        } else if (successCount === 1) {
+          setSuccessMessage('Archivo cargado correctamente.');
+        }
       }
       
       // Limpiar el input para permitir cargar el mismo archivo nuevamente
@@ -314,6 +380,9 @@ const FileUploadStep = ({ onFileUpload, onPreview, onViewData, data }: FileUploa
         </label>
         {error && (
           <p className="mt-4 text-red-500 text-sm">{error}</p>
+        )}
+        {successMessage && (
+          <p className="mt-4 text-green-500 text-sm">{successMessage}</p>
         )}
       </div>
 
