@@ -68,7 +68,10 @@ const Home: React.FC = () => {
               <div className="feature-icon">🔥</div>
               <h3>Facturas en Firebase</h3>
               <p>Gestione sus facturas con almacenamiento persistente en la nube usando Firebase.</p>
-              <Link to="/firebase-invoices" className="feature-link">Ir al módulo</Link>
+              <div className="feature-links">
+                <Link to="/firebase-invoices" className="feature-link">Importar Facturas</Link>
+                <Link to="/view-invoices" className="feature-link">Consultar Facturas</Link>
+              </div>
             </div>
             
             <div className="feature-card">

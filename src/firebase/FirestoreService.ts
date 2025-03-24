@@ -34,18 +34,22 @@ export interface SortCondition {
 }
 
 export class FirestoreService {
-  private static instance: FirestoreService;
+  private static instances: Record<string, FirestoreService> = {};
   private collectionName: string;
 
   private constructor(collectionName: string) {
     this.collectionName = collectionName;
+    console.log(`Nueva instancia de FirestoreService creada para colección: ${collectionName}`);
   }
 
   static getInstance(collectionName: string): FirestoreService {
-    if (!FirestoreService.instance) {
-      FirestoreService.instance = new FirestoreService(collectionName);
+    if (!FirestoreService.instances[collectionName]) {
+      console.log(`Creando nueva instancia de FirestoreService para colección: ${collectionName}`);
+      FirestoreService.instances[collectionName] = new FirestoreService(collectionName);
+    } else {
+      console.log(`Reutilizando instancia existente de FirestoreService para colección: ${collectionName}`);
     }
-    return FirestoreService.instance;
+    return FirestoreService.instances[collectionName];
   }
 
   // Crear un nuevo documento
@@ -86,7 +90,21 @@ export class FirestoreService {
   // Obtener todos los documentos
   async getAll(): Promise<DocumentData[]> {
     try {
-      const querySnapshot = await getDocs(collection(db, this.collectionName));
+      console.log(`Intentando obtener todos los documentos de la colección: ${this.collectionName}`);
+      const collectionRef = collection(db, this.collectionName);
+      console.log('Referencia de colección creada:', collectionRef);
+      
+      const querySnapshot = await getDocs(collectionRef);
+      console.log(`Se encontraron ${querySnapshot.docs.length} documentos en la colección ${this.collectionName}`);
+      
+      if (querySnapshot.docs.length === 0) {
+        console.log('La colección está vacía o no existe');
+      } else {
+        // Mostrar los IDs de los primeros 5 documentos para depuración
+        const sampleIds = querySnapshot.docs.slice(0, 5).map(doc => doc.id);
+        console.log('Muestra de IDs encontrados:', sampleIds);
+      }
+      
       return querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()

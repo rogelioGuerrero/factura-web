@@ -65,12 +65,25 @@ export class NavbarController {
   // Métodos para Firebase
   async loadNavItemsFromFirebase(): Promise<NavItem[]> {
     try {
+      console.log('Intentando cargar elementos de menú desde Firebase...');
       const items = await this.firebaseService.getAllMenuItems();
+      
       if (items && items.length > 0) {
+        console.log(`Se encontraron ${items.length} elementos de menú en Firebase`);
+        
+        // Verificar que no haya IDs duplicados
+        const uniqueItems = this.removeDuplicateNavItems(items);
+        if (uniqueItems.length !== items.length) {
+          console.log(`Se eliminaron ${items.length - uniqueItems.length} elementos duplicados`);
+          // Si había duplicados, actualizar en Firebase
+          await this.saveNavItemsToFirebase(uniqueItems);
+        }
+        
         // Actualizar el modelo local con los elementos de Firebase
-        this.model.setNavItems(items);
-        return items;
+        this.model.setNavItems(uniqueItems);
+        return uniqueItems;
       } else {
+        console.log('No se encontraron elementos de menú en Firebase, usando valores predeterminados');
         // Si no hay elementos en Firebase, usar los valores predeterminados
         const defaultItems = this.model.getNavItems();
         // Guardar los valores predeterminados en Firebase
@@ -84,10 +97,30 @@ export class NavbarController {
     }
   }
 
+  // Método para eliminar elementos duplicados basados en ID
+  private removeDuplicateNavItems(items: NavItem[]): NavItem[] {
+    const uniqueMap = new Map<string, NavItem>();
+    
+    // Mantener solo la última ocurrencia de cada ID
+    items.forEach(item => {
+      uniqueMap.set(item.id, item);
+      
+      // Procesar recursivamente los hijos si existen
+      if (item.children && item.children.length > 0) {
+        item.children = this.removeDuplicateNavItems(item.children);
+      }
+    });
+    
+    return Array.from(uniqueMap.values());
+  }
+
   async saveNavItemsToFirebase(items: NavItem[] = this.model.getNavItems()): Promise<string[]> {
     try {
+      // Eliminar duplicados antes de guardar
+      const uniqueItems = this.removeDuplicateNavItems(items);
+      
       // Guardar los elementos en Firebase
-      return await this.firebaseService.saveMenuItems(items);
+      return await this.firebaseService.saveMenuItems(uniqueItems);
     } catch (error) {
       console.error('Error al guardar elementos de menú en Firebase:', error);
       throw error;

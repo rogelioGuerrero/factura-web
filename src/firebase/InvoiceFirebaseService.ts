@@ -9,6 +9,7 @@ export class InvoiceFirebaseService {
   private constructor() {
     // Colección para facturas electrónicas
     this.firestoreService = FirestoreService.getInstance('invoices');
+    console.log('InvoiceFirebaseService inicializado con colección: invoices');
   }
   
   static getInstance(): InvoiceFirebaseService {
@@ -43,7 +44,10 @@ export class InvoiceFirebaseService {
   // Obtener todas las facturas
   async getAllInvoices(): Promise<DocumentData[]> {
     try {
-      return await this.firestoreService.getAll();
+      console.log('Solicitando todas las facturas desde Firebase...');
+      const result = await this.firestoreService.getAll();
+      console.log(`getAllInvoices: Se obtuvieron ${result.length} facturas`);
+      return result;
     } catch (error) {
       console.error('Error al obtener todas las facturas:', error);
       throw error;

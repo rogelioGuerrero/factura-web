@@ -45,6 +45,95 @@ export class InvoiceService {
     });
   }
 
+  // Procesar JSON desde una URL
+  async processJsonFromUrl(url: string): Promise<InvoiceData[]> {
+    try {
+      // Verificar si la URL termina en .json (archivo individual)
+      if (url.toLowerCase().endsWith('.json')) {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Error al obtener el archivo: ${response.status} ${response.statusText}`);
+        }
+        
+        const jsonData = await response.json();
+        // Verificar si es un array de facturas o una factura individual
+        if (Array.isArray(jsonData)) {
+          return jsonData as InvoiceData[];
+        } else {
+          return [jsonData as InvoiceData];
+        }
+      } 
+      // Si no termina en .json, intentar obtener un listado de archivos (si es una API o directorio)
+      else {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Error al obtener el directorio: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        // Intentar determinar si es un listado de archivos o una respuesta de API
+        if (Array.isArray(data)) {
+          // Asumimos que puede ser un array de URLs o un array de facturas directamente
+          const invoices: InvoiceData[] = [];
+          
+          // Verificar si son URLs o facturas directamente
+          for (const item of data) {
+            if (typeof item === 'string' && item.toLowerCase().endsWith('.json')) {
+              // Es una URL a un archivo JSON
+              const fileResponse = await fetch(item);
+              if (fileResponse.ok) {
+                const invoiceData = await fileResponse.json();
+                invoices.push(invoiceData as InvoiceData);
+              }
+            } else if (typeof item === 'object' && item !== null) {
+              // Asumimos que es una factura directamente
+              if (this.isValidInvoice(item)) {
+                invoices.push(item as InvoiceData);
+              }
+            }
+          }
+          
+          return invoices;
+        } else if (typeof data === 'object' && data !== null) {
+          // Podría ser una respuesta de API con una estructura específica
+          // Intentamos buscar arrays en las propiedades del objeto
+          for (const key in data) {
+            if (Array.isArray(data[key])) {
+              const possibleInvoices = data[key].filter((item: unknown) => this.isValidInvoice(item));
+              if (possibleInvoices.length > 0) {
+                return possibleInvoices as InvoiceData[];
+              }
+            }
+          }
+          
+          // Si llegamos aquí, verificamos si el objeto mismo es una factura
+          if (this.isValidInvoice(data)) {
+            return [data as InvoiceData];
+          }
+        }
+        
+        throw new Error('No se encontraron facturas válidas en la URL proporcionada');
+      }
+    } catch (error) {
+      console.error('Error al procesar JSON desde URL:', error);
+      throw error;
+    }
+  }
+
+  // Verificar si un objeto tiene la estructura básica de una factura
+  private isValidInvoice(obj: unknown): boolean {
+    return (
+      obj !== null &&
+      typeof obj === 'object' &&
+      'identificacion' in obj &&
+      'emisor' in obj &&
+      'receptor' in obj &&
+      'cuerpoDocumento' in obj &&
+      'resumen' in obj
+    );
+  }
+
   // Métodos para memoria local
   addInvoices(invoices: InvoiceData[]): void {
     this.invoices = [...this.invoices, ...invoices];

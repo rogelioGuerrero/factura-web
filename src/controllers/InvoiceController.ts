@@ -47,6 +47,36 @@ export class InvoiceController {
     }
   }
 
+  async handleUrlImport(url: string): Promise<{ success: boolean; data?: InvoiceData[]; error?: string }> {
+    try {
+      // Procesar la URL para obtener los datos JSON
+      const processedInvoices = await this.service.processJsonFromUrl(url);
+      
+      if (processedInvoices.length === 0) {
+        return { success: false, error: 'No se encontraron facturas válidas en la URL proporcionada' };
+      }
+      
+      // Guardar en memoria local
+      this.service.addInvoices(processedInvoices);
+      
+      // Guardar en Firebase
+      try {
+        await this.service.saveInvoicesToFirebase(processedInvoices);
+        console.log('Facturas desde URL guardadas en Firebase correctamente');
+      } catch (firebaseError) {
+        console.error('Error al guardar facturas desde URL en Firebase:', firebaseError);
+        // Continuar con la operación local aunque falle Firebase
+      }
+      
+      return { success: true, data: processedInvoices };
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return { success: false, error: error.message };
+      }
+      return { success: false, error: 'Error desconocido al procesar la URL' };
+    }
+  }
+
   // Métodos para memoria local
   addInvoices(invoices: InvoiceData[]): void {
     this.service.addInvoices(invoices);

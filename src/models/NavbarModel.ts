@@ -73,6 +73,10 @@ export class NavbarModel {
     this.navItems = [...items];
   }
 
+  clearNavItems(): void {
+    this.navItems = [];
+  }
+
   addNavItem(item: NavItem): void {
     if (!this.navItems.some(navItem => navItem.id === item.id)) {
       this.navItems.push(item);

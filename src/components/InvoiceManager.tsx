@@ -1,32 +1,47 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { InvoiceController } from '../controllers/InvoiceController';
 import { InvoiceData } from '../types/invoice';
+import InvoiceImporter from './InvoiceImporter';
 
 // Obtener la instancia del controlador FUERA del componente React
 // siguiendo el patrón para evitar actualizaciones infinitas
 const invoiceController = InvoiceController.getInstance();
 
-const InvoiceManager: React.FC = () => {
+interface InvoiceManagerProps {
+  showUploadOnly?: boolean;
+}
+
+const InvoiceManager: React.FC<InvoiceManagerProps> = ({ showUploadOnly = false }) => {
   const [invoices, setInvoices] = useState<InvoiceData[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceData | null>(null);
   const [initialized, setInitialized] = useState<boolean>(false);
+  const [debugInfo, setDebugInfo] = useState<string>('');
 
-  // Cargar facturas desde Firebase
+  // Cargar facturas desde Firebase - solo para la vista de consulta
   useEffect(() => {
-    if (!initialized) {
+    if (!initialized && !showUploadOnly) {
       const loadInvoices = async () => {
         try {
           setLoading(true);
+          console.log("Iniciando carga de facturas desde Firebase...");
+          
           const firebaseInvoices = await invoiceController.getAllInvoicesFromFirebase();
+          console.log(`Se encontraron ${firebaseInvoices.length} facturas en Firebase`);
+          setDebugInfo(`Se encontraron ${firebaseInvoices.length} facturas en Firebase`);
+          
           setInvoices(firebaseInvoices);
           setError(null);
         } catch (err) {
           console.error('Error al cargar facturas:', err);
           setError('Error al cargar facturas. Usando datos locales.');
+          setDebugInfo(`Error al conectar con Firebase: ${err instanceof Error ? err.message : 'Error desconocido'}`);
+          
           // Usar datos locales como fallback
-          setInvoices(invoiceController.getAllInvoices());
+          const localInvoices = invoiceController.getAllInvoices();
+          console.log(`Usando ${localInvoices.length} facturas locales como fallback`);
+          setInvoices(localInvoices);
         } finally {
           setLoading(false);
           setInitialized(true);
@@ -35,47 +50,36 @@ const InvoiceManager: React.FC = () => {
 
       loadInvoices();
     }
-  }, [initialized]);
+  }, [initialized, showUploadOnly]);
 
-  // Manejar la carga de archivos
-  const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!event.target.files || event.target.files.length === 0) return;
-    
+  // Manejar la importación completa
+  const handleImportComplete = useCallback(async (importedInvoices: InvoiceData[]) => {
     try {
-      setLoading(true);
-      const files = Array.from(event.target.files);
-      const result = await invoiceController.handleFileUpload(files);
+      console.log(`Importación completada: ${importedInvoices.length} facturas`);
       
-      if (result.success && result.data) {
-        // Actualizar la lista de facturas
+      if (!showUploadOnly) {
+        // Solo actualizar la lista si estamos en la vista de consulta
+        setLoading(true);
         const updatedInvoices = await invoiceController.getAllInvoicesFromFirebase();
         setInvoices(updatedInvoices);
         setError(null);
-      } else {
-        setError(result.error || 'Error al procesar los archivos');
       }
     } catch (err) {
-      console.error('Error al cargar archivos:', err);
-      setError('Error al cargar archivos');
+      console.error('Error al actualizar la lista de facturas:', err);
+      setError('Error al actualizar la lista de facturas');
     } finally {
       setLoading(false);
-      // Limpiar el input de archivos
-      if (event.target) {
-        event.target.value = '';
-      }
     }
-  }, []);
+  }, [showUploadOnly]);
 
-  // Eliminar una factura
+  // Manejar la eliminación de una factura
   const handleDelete = useCallback(async (id: string) => {
     try {
       setLoading(true);
       await invoiceController.deleteInvoiceFromFirebase(id);
-      
       // Actualizar la lista de facturas
       const updatedInvoices = await invoiceController.getAllInvoicesFromFirebase();
       setInvoices(updatedInvoices);
-      
       if (selectedInvoice && 'identificacion' in selectedInvoice && 
           selectedInvoice.identificacion.codigoGeneracion === id) {
         setSelectedInvoice(null);
@@ -88,7 +92,7 @@ const InvoiceManager: React.FC = () => {
     }
   }, [selectedInvoice]);
 
-  // Seleccionar una factura para ver detalles
+  // Manejar la selección de una factura para ver detalles
   const handleSelectInvoice = useCallback((invoice: InvoiceData) => {
     setSelectedInvoice(invoice);
   }, []);
@@ -100,28 +104,42 @@ const InvoiceManager: React.FC = () => {
     }
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {invoices.map((invoice, index) => (
-          <div 
-            key={invoice.identificacion.codigoGeneracion || index}
-            className="border p-4 rounded-lg shadow hover:shadow-md cursor-pointer"
-            onClick={() => handleSelectInvoice(invoice)}
-          >
-            <h3 className="font-bold">{invoice.emisor.nombre}</h3>
-            <p>Código: {invoice.identificacion.codigoGeneracion}</p>
-            <p>Fecha: {invoice.identificacion.fecEmi}</p>
-            <p>Total: ${invoice.resumen.totalPagar.toFixed(2)}</p>
-            <button 
-              className="mt-2 bg-red-500 text-white px-3 py-1 rounded"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete(invoice.identificacion.codigoGeneracion);
-              }}
-            >
-              Eliminar
-            </button>
-          </div>
-        ))}
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white border border-gray-200">
+          <thead>
+            <tr>
+              <th className="px-4 py-2 border">Emisor</th>
+              <th className="px-4 py-2 border">Receptor</th>
+              <th className="px-4 py-2 border">Fecha</th>
+              <th className="px-4 py-2 border">Total</th>
+              <th className="px-4 py-2 border">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {invoices.map((invoice, index) => (
+              <tr key={index} className="hover:bg-gray-50">
+                <td className="px-4 py-2 border">{invoice.emisor?.nombre || 'N/A'}</td>
+                <td className="px-4 py-2 border">{invoice.receptor?.nombre || 'N/A'}</td>
+                <td className="px-4 py-2 border">{invoice.identificacion?.fecEmi || 'N/A'}</td>
+                <td className="px-4 py-2 border">{invoice.resumen?.totalPagar ? `$${invoice.resumen.totalPagar.toFixed(2)}` : 'N/A'}</td>
+                <td className="px-4 py-2 border">
+                  <button 
+                    onClick={() => handleSelectInvoice(invoice)}
+                    className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded mr-2"
+                  >
+                    Ver
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(invoice.identificacion.codigoGeneracion)}
+                    className="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded"
+                  >
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     );
   };
@@ -131,103 +149,156 @@ const InvoiceManager: React.FC = () => {
     if (!selectedInvoice) return null;
 
     return (
-      <div className="mt-8 border p-6 rounded-lg shadow-lg">
-        <h2 className="text-xl font-bold mb-4">Detalles de la Factura</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <h3 className="font-semibold">Información General</h3>
-            <p>Código: {selectedInvoice.identificacion.codigoGeneracion}</p>
-            <p>Fecha: {selectedInvoice.identificacion.fecEmi}</p>
-            <p>Tipo: {selectedInvoice.identificacion.tipoDte}</p>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-screen overflow-y-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold">Detalles de Factura</h2>
+            <button 
+              onClick={() => setSelectedInvoice(null)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-          <div>
-            <h3 className="font-semibold">Emisor</h3>
-            <p>Nombre: {selectedInvoice.emisor.nombre}</p>
-            <p>NIT: {selectedInvoice.emisor.nit}</p>
-            <p>Correo: {selectedInvoice.emisor.correo}</p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <h3 className="font-semibold mb-2">Información General</h3>
+              <p><span className="font-medium">Fecha:</span> {selectedInvoice.identificacion.fecEmi || 'N/A'}</p>
+              <p><span className="font-medium">Folio:</span> {selectedInvoice.identificacion.codigoGeneracion || 'N/A'}</p>
+              <p><span className="font-medium">Serie:</span> {selectedInvoice.identificacion.tipoDte || 'N/A'}</p>
+              <p><span className="font-medium">Subtotal:</span> ${selectedInvoice.resumen.subTotal?.toFixed(2) || 'N/A'}</p>
+              <p><span className="font-medium">Total:</span> ${selectedInvoice.resumen.totalPagar?.toFixed(2) || 'N/A'}</p>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-2">Emisor</h3>
+              <p><span className="font-medium">Nombre:</span> {selectedInvoice.emisor.nombre || 'N/A'}</p>
+              <p><span className="font-medium">NIT:</span> {selectedInvoice.emisor.nit || 'N/A'}</p>
+              <p><span className="font-medium">Correo:</span> {selectedInvoice.emisor.correo || 'N/A'}</p>
+              
+              <h3 className="font-semibold mt-4 mb-2">Receptor</h3>
+              <p><span className="font-medium">Nombre:</span> {selectedInvoice.receptor.nombre || 'N/A'}</p>
+              <p><span className="font-medium">NIT:</span> {selectedInvoice.receptor.nit || 'N/A'}</p>
+              <p><span className="font-medium">Correo:</span> {selectedInvoice.receptor.correo || 'N/A'}</p>
+            </div>
           </div>
+          
           <div>
-            <h3 className="font-semibold">Receptor</h3>
-            <p>Nombre: {selectedInvoice.receptor.nombre}</p>
-            <p>NIT: {selectedInvoice.receptor.nit}</p>
-            <p>Correo: {selectedInvoice.receptor.correo}</p>
+            <h3 className="font-semibold mb-2">Detalle de Items</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full bg-white border border-gray-200">
+                <thead>
+                  <tr>
+                    <th className="px-4 py-2 border">Descripción</th>
+                    <th className="px-4 py-2 border">Cantidad</th>
+                    <th className="px-4 py-2 border">Precio Unitario</th>
+                    <th className="px-4 py-2 border">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedInvoice.cuerpoDocumento.map((item, idx) => (
+                    <tr key={idx} className="hover:bg-gray-50">
+                      <td className="px-4 py-2 border">{item.descripcion || 'N/A'}</td>
+                      <td className="px-4 py-2 border">{item.cantidad || 'N/A'}</td>
+                      <td className="px-4 py-2 border">${typeof item.precioUni === 'number' ? item.precioUni.toFixed(2) : item.precioUni}</td>
+                      <td className="px-4 py-2 border">${typeof item.ventaGravada === 'number' ? item.ventaGravada.toFixed(2) : '0.00'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-          <div>
-            <h3 className="font-semibold">Resumen</h3>
-            <p>Subtotal: ${selectedInvoice.resumen.subTotal.toFixed(2)}</p>
-            <p>IVA: ${selectedInvoice.resumen.totalIva.toFixed(2)}</p>
-            <p>Total: ${selectedInvoice.resumen.totalPagar.toFixed(2)}</p>
+          
+          <div className="mt-6 flex justify-end">
+            <button 
+              onClick={() => setSelectedInvoice(null)}
+              className="bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded"
+            >
+              Cerrar
+            </button>
           </div>
         </div>
-        
-        <div className="mt-4">
-          <h3 className="font-semibold">Detalle de Items</h3>
-          <table className="w-full mt-2 border-collapse">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="border p-2 text-left">Descripción</th>
-                <th className="border p-2 text-right">Cantidad</th>
-                <th className="border p-2 text-right">Precio</th>
-                <th className="border p-2 text-right">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {selectedInvoice.cuerpoDocumento.map((item, idx) => (
-                <tr key={idx} className="border-b">
-                  <td className="border p-2">{item.descripcion}</td>
-                  <td className="border p-2 text-right">{item.cantidad}</td>
-                  <td className="border p-2 text-right">${typeof item.precioUni === 'number' ? item.precioUni.toFixed(2) : item.precioUni}</td>
-                  <td className="border p-2 text-right">${typeof item.ventaGravada === 'number' ? item.ventaGravada.toFixed(2) : '0.00'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        
-        <button 
-          className="mt-4 bg-gray-500 text-white px-4 py-2 rounded"
-          onClick={() => setSelectedInvoice(null)}
-        >
-          Cerrar
-        </button>
       </div>
     );
   };
 
+  // Renderizar componente según el modo
+  if (showUploadOnly) {
+    return (
+      <div className="container mx-auto p-4">
+        <h1 className="text-2xl font-bold mb-4">Importación de Facturas</h1>
+        
+        {/* Componente de importación */}
+        <InvoiceImporter 
+          onImportStart={() => {
+            setLoading(true);
+            setError(null);
+          }}
+          onImportComplete={handleImportComplete}
+          onImportError={(errorMsg) => {
+            setError(errorMsg);
+            setLoading(false);
+          }}
+        />
+        
+        {/* Mensajes de error */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <p>{error}</p>
+          </div>
+        )}
+        
+        {/* Indicador de carga solo cuando se está importando */}
+        {loading && (
+          <div className="flex justify-center my-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        )}
+      </div>
+    );
+  }
+  
+  // Modo de visualización de facturas
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Gestor de Facturas Electrónicas</h1>
+      <h1 className="text-2xl font-bold mb-4">Consulta de Facturas</h1>
       
+      {/* Mensajes de error y carga */}
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
+          <p>{error}</p>
         </div>
       )}
       
-      <div className="mb-6">
-        <label className="block mb-2 font-semibold">
-          Cargar Archivos JSON
-          <input
-            type="file"
-            accept=".json"
-            multiple
-            onChange={handleFileUpload}
-            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mt-1"
-          />
-        </label>
+      {/* Información de depuración */}
+      {debugInfo && (
+        <div className="bg-gray-100 border border-gray-300 text-gray-700 px-4 py-3 rounded mb-4">
+          <p className="font-semibold">Información de conexión:</p>
+          <p>{debugInfo}</p>
+        </div>
+      )}
+      
+      {loading && (
+        <div className="flex justify-center my-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      )}
+      
+      {/* Lista de facturas */}
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-4">Facturas Disponibles</h2>
+        {invoices.length === 0 ? (
+          <p className="text-gray-500">No hay facturas disponibles. Importe algunas utilizando la opción "Importar Facturas".</p>
+        ) : (
+          renderInvoices()
+        )}
       </div>
       
-      {loading ? (
-        <div className="flex justify-center items-center py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-        </div>
-      ) : (
-        <>
-          <h2 className="text-xl font-semibold mb-3">Facturas Disponibles</h2>
-          {renderInvoices()}
-          {renderInvoiceDetails()}
-        </>
-      )}
+      {/* Detalles de la factura seleccionada */}
+      {renderInvoiceDetails()}
     </div>
   );
 };
