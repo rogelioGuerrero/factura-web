@@ -132,6 +132,17 @@ const Navbar: React.FC<NavbarProps> = ({ onEditClick }) => {
     );
   }
   
+  // Botón de configuración flotante que siempre es visible
+  const configButton = (
+    <button 
+      className={`navbar-config-button navbar-config-${position}`} 
+      onClick={handleOpenConfigEditor}
+      title="Configurar menú"
+    >
+      <span className="icon icon-settings">⚙️</span>
+    </button>
+  );
+  
   return (
     <>
       <nav className={navbarClass}>
@@ -168,12 +179,16 @@ const Navbar: React.FC<NavbarProps> = ({ onEditClick }) => {
             ))}
           </ul>
           
+          {/* Mantener el botón original para compatibilidad */}
           <button className="navbar-edit-button" onClick={handleOpenConfigEditor}>
             <span className="icon icon-edit"></span>
             Editar Menú
           </button>
         </div>
       </nav>
+      
+      {/* Añadir el botón de configuración flotante que siempre es visible */}
+      {configButton}
       
       {showConfigEditor && (
         <MenuConfigEditor 

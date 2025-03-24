@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
+import { getFirestore, Firestore } from 'firebase/firestore';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
+import { FirebaseApp } from 'firebase/app';
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -27,9 +28,9 @@ console.log('Configuración de Firebase:', {
   // No mostrar apiKey ni otras claves sensibles
 });
 
-let app;
-let db;
-let storage;
+let app: FirebaseApp;
+let db: Firestore;
+let storage: FirebaseStorage;
 
 // Inicializar Firebase
 try {
