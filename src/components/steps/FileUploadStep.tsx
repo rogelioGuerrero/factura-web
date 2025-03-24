@@ -1,4 +1,4 @@
-import { ChangeEvent, DragEvent, useState, useEffect, useRef } from 'react';
+import { ChangeEvent, DragEvent, useState, useEffect, useRef, useCallback } from 'react';
 import { InvoiceData } from '../../types/invoice';
 
 interface FileUploadStepProps {
@@ -15,8 +15,62 @@ const FileUploadStep = ({ onFileUpload, onPreview, onViewData, data }: FileUploa
   const [fileNames, setFileNames] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
+  const [invoiceType, setInvoiceType] = useState<'unknown' | 'sales' | 'purchases'>('unknown');
   const itemsPerPage = 10;
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Función para determinar si las facturas son de compra o venta
+  const determineInvoiceType = useCallback((invoices: InvoiceData[]) => {
+    if (invoices.length <= 1) {
+      setInvoiceType('unknown');
+      return;
+    }
+
+    // Contar ocurrencias de NIT de emisores y receptores
+    const emitterNITs = new Map<string, number>();
+    const receiverNITs = new Map<string, number>();
+
+    invoices.forEach(invoice => {
+      const emitterNIT = invoice.emisor.nit;
+      const receiverNIT = invoice.receptor.nit;
+
+      emitterNITs.set(emitterNIT, (emitterNITs.get(emitterNIT) || 0) + 1);
+      receiverNITs.set(receiverNIT, (receiverNITs.get(receiverNIT) || 0) + 1);
+    });
+
+    // Encontrar el NIT más común para emisores y receptores
+    let maxEmitterCount = 0;
+    let maxReceiverCount = 0;
+
+    emitterNITs.forEach((count) => {
+      if (count > maxEmitterCount) {
+        maxEmitterCount = count;
+      }
+    });
+
+    receiverNITs.forEach((count) => {
+      if (count > maxReceiverCount) {
+        maxReceiverCount = count;
+      }
+    });
+
+    // Determinar si son facturas de compra o venta
+    const emitterPercentage = maxEmitterCount / invoices.length;
+    const receiverPercentage = maxReceiverCount / invoices.length;
+
+    if (emitterPercentage > 0.7 && emitterPercentage >= receiverPercentage) {
+      // Si más del 70% de las facturas tienen el mismo emisor, son facturas de venta
+      setInvoiceType('sales');
+    } else if (receiverPercentage > 0.7 && receiverPercentage > emitterPercentage) {
+      // Si más del 70% de las facturas tienen el mismo receptor, son facturas de compra
+      setInvoiceType('purchases');
+    } else {
+      // Si no hay un patrón claro, mantener como desconocido
+      setInvoiceType('unknown');
+    }
+
+    console.log(`Tipo de facturas determinado: ${invoiceType === 'sales' ? 'Ventas' : invoiceType === 'purchases' ? 'Compras' : 'Desconocido'}`);
+  }, [setInvoiceType, invoiceType]);
 
   // Sincronizar estado local con props
   useEffect(() => {
@@ -27,7 +81,10 @@ const FileUploadStep = ({ onFileUpload, onPreview, onViewData, data }: FileUploa
       `Factura ${invoice.identificacion.numeroControl || invoice.identificacion.codigoGeneracion}`
     );
     setFileNames(names);
-  }, [data]);
+    
+    // Determinar el tipo de facturas (compra o venta)
+    determineInvoiceType(data);
+  }, [data, determineInvoiceType]);
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -36,6 +93,14 @@ const FileUploadStep = ({ onFileUpload, onPreview, onViewData, data }: FileUploa
 
   const handleDragLeave = () => {
     setIsDragging(false);
+  };
+
+  // Función para verificar si una factura ya existe
+  const invoiceExists = (newInvoice: InvoiceData): boolean => {
+    const newInvoiceCode = newInvoice.identificacion.codigoGeneracion;
+    return uploadedFiles.some(
+      existingInvoice => existingInvoice.identificacion.codigoGeneracion === newInvoiceCode
+    );
   };
 
   const processFile = async (file: File) => {
@@ -47,12 +112,21 @@ const FileUploadStep = ({ onFileUpload, onPreview, onViewData, data }: FileUploa
         throw new Error('Archivo JSON inválido: falta información requerida');
       }
       
+      // Verificar si la factura ya existe
+      if (invoiceExists(jsonData)) {
+        console.warn(`Factura duplicada: ${jsonData.identificacion.codigoGeneracion}`);
+        setError(`La factura con código ${jsonData.identificacion.codigoGeneracion} ya ha sido cargada.`);
+        return false;
+      }
+      
       // Llamar a onFileUpload con solo el nuevo archivo
       onFileUpload([jsonData]);
       setError(null);
+      return true;
     } catch (error) {
       console.error("Error al procesar archivo:", error);
       setError('Error al procesar el archivo. Asegúrese de que sea un JSON válido.');
+      return false;
     }
   };
 
@@ -71,17 +145,50 @@ const FileUploadStep = ({ onFileUpload, onPreview, onViewData, data }: FileUploa
     setError(null);
     
     // Procesar cada archivo
+    let successCount = 0;
+    let duplicateCount = 0;
+    let errorCount = 0;
+    
     for (const file of jsonFiles) {
-      await processFile(file);
+      const success = await processFile(file);
+      if (success) {
+        successCount++;
+      } else if (error && error.includes('ya ha sido cargada')) {
+        duplicateCount++;
+      } else {
+        errorCount++;
+      }
+    }
+    
+    // Mostrar resumen si se procesaron múltiples archivos
+    if (jsonFiles.length > 1) {
+      setError(`Procesamiento completado: ${successCount} archivos cargados, ${duplicateCount} duplicados, ${errorCount} con errores.`);
     }
   };
 
   const handleFileInput = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
+      let successCount = 0;
+      let duplicateCount = 0;
+      let errorCount = 0;
+      
       for (let i = 0; i < files.length; i++) {
-        await processFile(files[i]);
+        const success = await processFile(files[i]);
+        if (success) {
+          successCount++;
+        } else if (error && error.includes('ya ha sido cargada')) {
+          duplicateCount++;
+        } else {
+          errorCount++;
+        }
       }
+      
+      // Mostrar resumen si se procesaron múltiples archivos
+      if (files.length > 1) {
+        setError(`Procesamiento completado: ${successCount} archivos cargados, ${duplicateCount} duplicados, ${errorCount} con errores.`);
+      }
+      
       // Limpiar el input para permitir cargar el mismo archivo nuevamente
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -104,6 +211,9 @@ const FileUploadStep = ({ onFileUpload, onPreview, onViewData, data }: FileUploa
     setUploadedFiles(newFiles);
     setFileNames(newFileNames);
     onFileUpload(newFiles);
+    
+    // Reevaluar el tipo de facturas después de eliminar
+    determineInvoiceType(newFiles);
   };
 
   const handlePreview = (index: number) => {
@@ -148,6 +258,18 @@ const FileUploadStep = ({ onFileUpload, onPreview, onViewData, data }: FileUploa
 
   const goToPage = (pageNumber: number) => {
     setPage(pageNumber);
+  };
+
+  // Obtener el tipo de factura como texto
+  const getInvoiceTypeText = () => {
+    switch (invoiceType) {
+      case 'sales':
+        return 'Facturas de Venta';
+      case 'purchases':
+        return 'Facturas de Compra';
+      default:
+        return 'Facturas';
+    }
   };
 
   return (
@@ -199,7 +321,7 @@ const FileUploadStep = ({ onFileUpload, onPreview, onViewData, data }: FileUploa
         <div className="mt-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-medium">
-              Archivos cargados ({uploadedFiles.length})
+              {getInvoiceTypeText()} ({uploadedFiles.length})
             </h3>
             
             <div className="flex items-center">
