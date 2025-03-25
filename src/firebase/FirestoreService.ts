@@ -121,20 +121,35 @@ export class FirestoreService {
     sortBy: SortCondition[] = []
   ): Promise<DocumentData[]> {
     try {
+      console.log(`Buscando documentos en colección ${this.collectionName} con filtros:`, JSON.stringify(filters));
+      
       const constraints: QueryConstraint[] = [];
       
       // Añadir filtros
       filters.forEach(filter => {
+        console.log(`Añadiendo filtro: campo=${filter.field}, operador=${filter.operator}, valor=${filter.value}`);
         constraints.push(where(filter.field, filter.operator, filter.value));
       });
       
       // Añadir ordenamiento
       sortBy.forEach(sort => {
+        console.log(`Añadiendo ordenamiento: campo=${sort.field}, dirección=${sort.direction}`);
         constraints.push(orderBy(sort.field, sort.direction));
       });
       
       const q = query(collection(db, this.collectionName), ...constraints);
+      console.log(`Consulta creada para colección ${this.collectionName}`);
+      
       const querySnapshot = await getDocs(q);
+      console.log(`Se encontraron ${querySnapshot.docs.length} documentos que coinciden con los filtros`);
+      
+      // Mostrar los primeros 3 documentos para depuración
+      if (querySnapshot.docs.length > 0) {
+        const sampleDocs = querySnapshot.docs.slice(0, 3);
+        sampleDocs.forEach((doc, index) => {
+          console.log(`Documento ${index + 1}:`, { id: doc.id, ...doc.data() });
+        });
+      }
       
       return querySnapshot.docs.map(doc => ({
         id: doc.id,

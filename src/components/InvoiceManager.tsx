@@ -73,15 +73,19 @@ const InvoiceManager: React.FC<InvoiceManagerProps> = ({ showUploadOnly = false 
   }, [showUploadOnly]);
 
   // Manejar la eliminación de una factura
-  const handleDelete = useCallback(async (id: string) => {
+  const handleDelete = useCallback(async (codigoGeneracion: string) => {
     try {
       setLoading(true);
-      await invoiceController.deleteInvoiceFromFirebase(id);
+      console.log(`Intentando eliminar factura con código: ${codigoGeneracion}`);
+      await invoiceController.deleteInvoiceFromFirebase(codigoGeneracion);
+      console.log(`Factura con código ${codigoGeneracion} eliminada correctamente`);
+      
       // Actualizar la lista de facturas
       const updatedInvoices = await invoiceController.getAllInvoicesFromFirebase();
       setInvoices(updatedInvoices);
+      
       if (selectedInvoice && 'identificacion' in selectedInvoice && 
-          selectedInvoice.identificacion.codigoGeneracion === id) {
+          selectedInvoice.identificacion.codigoGeneracion === codigoGeneracion) {
         setSelectedInvoice(null);
       }
     } catch (err) {

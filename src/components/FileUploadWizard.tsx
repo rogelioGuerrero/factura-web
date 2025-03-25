@@ -50,19 +50,19 @@ const FileUploadWizard = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="bg-blue-500 text-white text-center py-4 rounded-t-lg">
-        <h1 className="text-2xl font-bold">Gestor de Facturas Electrónicas</h1>
+    <div className="max-w-4xl mx-auto p-4 h-full">
+      <div className="bg-blue-500 text-white text-center py-3 rounded-t-lg">
+        <h1 className="text-xl font-bold">Gestor de Facturas Electrónicas</h1>
       </div>
       
-      <div className="bg-white p-6 rounded-b-lg shadow-md">
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-2">Gestor de Facturas</h2>
+      <div className="bg-white p-4 rounded-b-lg shadow-md h-[calc(100vh-180px)] overflow-auto">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold mb-1">Gestor de Facturas</h2>
           <p className="text-gray-600 text-sm">Sube, visualiza y gestiona tus facturas electrónicas</p>
           
           {/* Indicador de pasos */}
-          <div className="flex items-center mt-6">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+          <div className="flex items-center mt-3">
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
               currentStep === 1 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
             }`}>
               1
@@ -70,7 +70,7 @@ const FileUploadWizard = () => {
             <div className="flex-1 h-1 mx-2 bg-gray-200">
               <div className={`h-full ${currentStep === 2 ? 'bg-blue-500' : 'bg-gray-200'}`} style={{ width: currentStep > 1 ? '100%' : '0%' }}></div>
             </div>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
               currentStep === 2 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
             }`}>
               2

@@ -217,10 +217,22 @@ export class InvoiceService {
 
   async deleteInvoiceFromFirebase(id: string): Promise<void> {
     try {
-      await this.firebaseService.deleteInvoice(id);
+      console.log(`Intentando eliminar factura con ID: ${id}`);
+      await this.firebaseService.deleteInvoiceByCodigoGeneracion(id);
+      console.log(`Factura con ID ${id} eliminada correctamente`);
     } catch (error) {
       console.error('Error al eliminar factura de Firebase:', error);
       throw error;
+    }
+  }
+
+  async invoiceExistsInFirebase(codigoGeneracion: string): Promise<boolean> {
+    try {
+      const invoice = await this.firebaseService.getInvoiceByCodigoGeneracion(codigoGeneracion);
+      return invoice !== null;
+    } catch (error) {
+      console.error('Error al verificar si la factura existe en Firebase:', error);
+      return false; // En caso de error, asumimos que no existe
     }
   }
 

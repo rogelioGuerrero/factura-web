@@ -144,6 +144,16 @@ export class InvoiceController {
     }
   }
 
+  // Verificar si una factura existe en Firebase por su código de generación
+  async invoiceExistsInFirebase(codigoGeneracion: string): Promise<boolean> {
+    try {
+      return await this.service.invoiceExistsInFirebase(codigoGeneracion);
+    } catch (error) {
+      console.error('Error al verificar si la factura existe en Firebase:', error);
+      return false; // En caso de error, asumimos que no existe
+    }
+  }
+
   async searchInvoicesInFirebase(
     filters: FilterCondition[] = [],
     sortBy: SortCondition[] = []
