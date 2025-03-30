@@ -5,6 +5,7 @@ export interface NavItem {
   icon?: string;
   children?: NavItem[];
   isExternal?: boolean;
+  disabled?: boolean;
 }
 
 export class NavbarModel {
@@ -34,33 +35,21 @@ export class NavbarModel {
       },
       {
         id: 'invoices',
-        label: 'Facturas',
-        path: '/invoices',
+        label: 'Ver Facturas',
+        path: '/view-invoices',
         icon: 'document'
+      },
+      {
+        id: 'fields',
+        label: 'Gestor de Campos',
+        path: '/custom-fields',
+        icon: 'customize'
       },
       {
         id: 'reports',
         label: 'Reportes',
         path: '/reports',
-        icon: 'chart',
-        children: [
-          {
-            id: 'monthly',
-            label: 'Mensual',
-            path: '/reports/monthly'
-          },
-          {
-            id: 'annual',
-            label: 'Anual',
-            path: '/reports/annual'
-          }
-        ]
-      },
-      {
-        id: 'settings',
-        label: 'Configuración',
-        path: '/settings',
-        icon: 'settings'
+        icon: 'chart'
       }
     ];
   }

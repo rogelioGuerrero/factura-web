@@ -7,6 +7,7 @@ export interface Identificacion {
   fecEmi: string;
   horEmi: string;
   tipoMoneda: string;
+  fecVencimiento?: string | any;
 }
 
 export interface DocumentoRelacionado {
@@ -99,10 +100,15 @@ export interface Resumen {
   totalPagar: number;
   totalLetras: string;
   totalIva: number;
+  totalIVA?: number; 
   saldoFavor: number;
   condicionOperacion: number;
   pagos: Pago[];
   numPagoElectronico: string;
+  totalImpuestos?: number; 
+  montoTotal?: number; 
+  montoGravable?: number; 
+  [key: string]: any; 
 }
 
 export interface Extension {
@@ -119,6 +125,7 @@ export interface VentaTercero {
 }
 
 export interface InvoiceData {
+  id?: string;
   identificacion: Identificacion;
   documentoRelacionado?: DocumentoRelacionado;
   emisor: Emisor;
@@ -130,4 +137,18 @@ export interface InvoiceData {
   extension?: Extension;
   firmaElectronica?: string;
   selloRecibido?: string;
+}
+
+export interface InvoiceSummary {
+  id: string;
+  numeroControl: string;
+  fechaEmision: string;
+  receptorNombre: string;
+  montoTotal: number;
+  estado?: string;
+}
+
+export interface ProcessResult {
+  data: InvoiceData[];
+  warnings: string[];
 }

@@ -1,5 +1,5 @@
-import { InvoiceData, InvoiceItem } from '../types/invoice';
-import { FieldConfig } from '../models/FieldSelectionModel';
+import { InvoiceData, InvoiceItem } from '../../types/invoice';
+import { FieldConfig } from '../../modules/invoices/models/FieldSelectionModel';
 
 /**
  * Extrae un valor de un objeto usando una ruta de acceso en formato string

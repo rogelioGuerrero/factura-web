@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
+import { getAuth, Auth } from 'firebase/auth';
 import { FirebaseApp } from 'firebase/app';
 
 // Configuración de Firebase
@@ -31,6 +32,7 @@ console.log('Configuración de Firebase:', {
 let app: FirebaseApp;
 let db: Firestore;
 let storage: FirebaseStorage;
+let auth: Auth;
 
 // Inicializar Firebase
 try {
@@ -41,6 +43,7 @@ try {
   // Inicializar servicios
   db = getFirestore(app);
   storage = getStorage(app);
+  auth = getAuth(app);
   
   // Verificar si estamos en modo de desarrollo
   if (import.meta.env.DEV) {
@@ -52,4 +55,4 @@ try {
 }
 
 // Exportar servicios
-export { app, db, storage };
+export { app, db, storage, auth };

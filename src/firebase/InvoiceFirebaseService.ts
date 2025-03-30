@@ -1,5 +1,5 @@
 import { DocumentData } from 'firebase/firestore';
-import { FirestoreService, FirestoreDocument, FilterCondition, SortCondition } from './FirestoreService';
+import { FirestoreService, FirestoreDocument, FilterCondition, SortCondition } from '../shared/utils/FirestoreService';
 import { InvoiceData } from '../types/invoice';
 
 export class InvoiceFirebaseService {
@@ -82,6 +82,17 @@ export class InvoiceFirebaseService {
       return await this.firestoreService.getWithFilters(filters, sortBy);
     } catch (error) {
       console.error('Error al buscar facturas:', error);
+      throw error;
+    }
+  }
+  
+  // Obtener documentos con filtros y ordenamiento
+  async getWithFilters(filters: FilterCondition[], sortBy: SortCondition[]): Promise<InvoiceData[]> {
+    try {
+      const docs = await this.firestoreService.getWithFilters(filters, sortBy);
+      return docs as InvoiceData[];
+    } catch (error) {
+      console.error('Error al obtener facturas con filtros:', error);
       throw error;
     }
   }

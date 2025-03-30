@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme } from '../../../../context/ThemeContext';
 import './Sidebar.css';
 
 interface MenuItem {
@@ -26,13 +26,13 @@ const defaultMenuItems: MenuItem[] = [
     children: [
       {
         id: 'upload',
-        label: 'Subir Facturas',
+        label: 'Gestionar Facturas',
         path: '/invoices',
         icon: 'upload'
       },
       {
         id: 'firebase-invoices',
-        label: 'Firebase Facturas',
+        label: 'Facturas en la BD',
         path: '/firebase-invoices',
         icon: 'firebase'
       },
@@ -52,7 +52,7 @@ const defaultMenuItems: MenuItem[] = [
   },
   {
     id: 'custom-fields',
-    label: 'Personalización de Campos',
+    label: 'Gestor de Contenido',
     path: '/custom-fields',
     icon: 'customize'
   },

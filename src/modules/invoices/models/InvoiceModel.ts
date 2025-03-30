@@ -1,4 +1,4 @@
-import { InvoiceData } from '../types/invoice';
+import { InvoiceData } from '../../../types/invoice';
 
 export class InvoiceModel {
   private static instance: InvoiceModel;

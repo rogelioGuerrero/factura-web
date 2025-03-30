@@ -61,8 +61,13 @@ body {
 .content-wrapper {
   flex: 1;
   padding: 1rem;
-  margin-left: 250px; /* Ancho del sidebar */
   transition: margin-left 0.3s ease;
+}
+
+/* Contenido a pantalla completa (sin sidebar) */
+.full-width {
+  margin-left: 0;
+  width: 100%;
 }
 
 /* Contenedores */
@@ -115,6 +120,30 @@ body {
   background-color: var(--border-color);
 }
 
+/* Botón de inicio */
+.home-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.home-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .home-button {
+  background-color: var(--card-bg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
 /* Utilidades */
 .text-center {
   text-align: center;
@@ -146,6 +175,13 @@ body {
 @media (max-width: 768px) {
   .content-wrapper {
     margin-left: 0;
-    padding-top: 60px; /* Altura del navbar en móvil */
+    padding-top: 20px;
+  }
+  
+  .home-button {
+    width: 36px;
+    height: 36px;
+    top: 8px;
+    left: 8px;
   }
 }
