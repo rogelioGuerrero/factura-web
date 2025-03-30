@@ -1,247 +1,477 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import '../styles/Reports.css';
 
-interface InvoiceData {
+interface Invoice {
   id: string;
-  fecha: string;
-  total: number;
-  emisor: string;
-  receptor: string;
-  estado: string;
+  identificacion: {
+    numeroControl: string;
+    codigoGeneracion: string;
+    fecEmi: string;
+    horEmi: string;
+    tipoMoneda: string;
+  };
+  emisor: {
+    nombre: string;
+    nrc: string;
+    nit: string;
+  };
+  receptor: {
+    nombre: string;
+    nrc: string;
+    nit: string;
+  };
+  cuerpoDocumento: Array<{
+    descripcion: string;
+    cantidad: number;
+    precioUni: number;
+    ventaGravada: number;
+  }>;
+  resumen: {
+    totalGravada: number;
+    montoTotalOperacion: number;
+    totalPagar: number;
+    tributos: Array<{
+      codigo: string;
+      descripcion: string;
+      valor: number;
+    }>;
+    condicionOperacion: number;
+    pagos: Array<{
+      codigo: string;
+      montoPago: number;
+    }>;
+  };
+  timestamp?: any;
+}
+
+interface MonthlyData {
+  [key: string]: {
+    count: number;
+    total: number;
+  };
+}
+
+interface ClientData {
+  [key: string]: {
+    count: number;
+    total: number;
+    name: string;
+  };
 }
 
 const Reports: React.FC = () => {
-  const [invoices, setInvoices] = useState<InvoiceData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [totalAmount, setTotalAmount] = useState(0);
-  const [invoiceCount, setInvoiceCount] = useState(0);
-  const [averageAmount, setAverageAmount] = useState(0);
-  const [monthlyData, setMonthlyData] = useState<{[key: string]: number}>({});
-  const [usingDemoData, setUsingDemoData] = useState(false);
+  const [monthlyData, setMonthlyData] = useState<MonthlyData>({});
+  const [clientData, setClientData] = useState<ClientData>({});
+  const [totalInvoiced, setTotalInvoiced] = useState<number>(0);
+  const [totalIVA, setTotalIVA] = useState<number>(0);
+  const [lastUpdate, setLastUpdate] = useState<string>('');
 
   useEffect(() => {
-    const fetchInvoices = async () => {
-      try {
-        setLoading(true);
-        const invoicesRef = collection(db, 'facturas');
-        const q = query(invoicesRef, orderBy('fecha', 'desc'));
-        const querySnapshot = await getDocs(q);
-        
-        const invoicesData: InvoiceData[] = [];
-        let total = 0;
-        const monthlyTotals: {[key: string]: number} = {};
-        
-        querySnapshot.forEach((doc) => {
-          const data = doc.data() as Omit<InvoiceData, 'id'>;
-          
-          // Validar que los datos tengan la estructura esperada
-          if (data && typeof data.total === 'number') {
-            invoicesData.push({
-              id: doc.id,
-              fecha: data.fecha || 'Sin fecha',
-              total: data.total || 0,
-              emisor: data.emisor || 'Sin emisor',
-              receptor: data.receptor || 'Sin receptor',
-              estado: data.estado || 'Pendiente'
-            });
-            
-            // Calcular total
-            total += data.total || 0;
-            
-            // Agrupar por mes para gráficos
-            if (data.fecha) {
-              try {
-                const date = new Date(data.fecha);
-                const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
-                
-                if (!monthlyTotals[monthYear]) {
-                  monthlyTotals[monthYear] = 0;
-                }
-                
-                monthlyTotals[monthYear] += data.total || 0;
-              } catch (e) {
-                console.error('Error al procesar fecha:', data.fecha, e);
-              }
-            }
-          }
-        });
-        
-        console.log('Datos cargados desde Firebase:', invoicesData.length, 'facturas');
-        
-        if (invoicesData.length > 0) {
-          setInvoices(invoicesData);
-          setTotalAmount(total);
-          setInvoiceCount(invoicesData.length);
-          setAverageAmount(invoicesData.length > 0 ? total / invoicesData.length : 0);
-          setMonthlyData(monthlyTotals);
-          setUsingDemoData(false);
-          setError(null);
-        } else {
-          console.log('No se encontraron datos en Firebase, usando datos de demostración');
-          generateDemoData();
-          setUsingDemoData(true);
-        }
-      } catch (err) {
-        console.error('Error al cargar facturas:', err);
-        setError('Error al cargar los datos de facturas. Por favor, intenta de nuevo más tarde.');
-        generateDemoData();
-        setUsingDemoData(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchInvoices();
   }, []);
 
-  // Función para generar datos de ejemplo si no hay datos reales
-  const generateDemoData = () => {
-    const demoInvoices: InvoiceData[] = [];
-    const demoMonthlyData: {[key: string]: number} = {};
-    let demoTotal = 0;
-    
-    // Generar 12 meses de datos
-    const currentDate = new Date();
-    for (let i = 0; i < 12; i++) {
-      const date = new Date(currentDate);
-      date.setMonth(date.getMonth() - i);
+  const fetchInvoices = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const invoicesRef = collection(db, 'invoices');
+      const q = query(invoicesRef, orderBy('timestamp', 'desc'));
+      const querySnapshot = await getDocs(q);
       
-      const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
-      const monthlyTotal = Math.floor(Math.random() * 50000) + 10000; // Entre 10,000 y 60,000
+      const invoicesData: Invoice[] = [];
+      let total = 0;
+      let totalIva = 0;
+      const monthlyStats: MonthlyData = {};
+      const clientStats: ClientData = {};
       
-      demoMonthlyData[monthYear] = monthlyTotal;
-      demoTotal += monthlyTotal;
-      
-      // Generar algunas facturas para cada mes
-      const invoicesPerMonth = Math.floor(Math.random() * 5) + 3; // Entre 3 y 8 facturas por mes
-      
-      for (let j = 0; j < invoicesPerMonth; j++) {
-        const invoiceDate = new Date(date);
-        invoiceDate.setDate(Math.floor(Math.random() * 28) + 1); // Día aleatorio del mes
+      querySnapshot.forEach((doc) => {
+        const data = doc.data() as Invoice;
+        data.id = doc.id;
         
-        const invoiceAmount = Math.floor(Math.random() * 10000) + 1000; // Entre 1,000 y 11,000
-        
-        demoInvoices.push({
-          id: `demo-${i}-${j}`,
-          fecha: invoiceDate.toISOString().split('T')[0],
-          total: invoiceAmount,
-          emisor: 'Empresa Demo',
-          receptor: `Cliente ${j + 1}`,
-          estado: Math.random() > 0.2 ? 'Pagada' : 'Pendiente'
-        });
-      }
+        // Asegurarse de que los campos necesarios existen
+        if (data.identificacion && data.resumen) {
+          invoicesData.push(data);
+          
+          // Calcular el total facturado
+          const invoiceTotal = data.resumen.montoTotalOperacion || 0;
+          total += invoiceTotal;
+          
+          // Calcular el total de IVA
+          if (data.resumen.tributos && data.resumen.tributos.length > 0) {
+            data.resumen.tributos.forEach(tributo => {
+              if (tributo.codigo === "20") { // Código 20 es IVA
+                totalIva += tributo.valor;
+              }
+            });
+          }
+          
+          // Agrupar por mes
+          if (data.identificacion.fecEmi) {
+            const date = new Date(data.identificacion.fecEmi);
+            const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
+            
+            if (!monthlyStats[monthYear]) {
+              monthlyStats[monthYear] = { count: 0, total: 0 };
+            }
+            
+            monthlyStats[monthYear].count += 1;
+            monthlyStats[monthYear].total += invoiceTotal;
+          }
+          
+          // Agrupar por cliente
+          if (data.receptor && data.receptor.nit) {
+            const clientNit = data.receptor.nit;
+            if (!clientStats[clientNit]) {
+              clientStats[clientNit] = { 
+                count: 0, 
+                total: 0, 
+                name: data.receptor.nombre || 'Cliente sin nombre'
+              };
+            }
+            
+            clientStats[clientNit].count += 1;
+            clientStats[clientNit].total += invoiceTotal;
+          }
+        }
+      });
+      
+      setInvoices(invoicesData);
+      setTotalInvoiced(total);
+      setTotalIVA(totalIva);
+      setMonthlyData(monthlyStats);
+      setClientData(clientStats);
+      setLastUpdate(new Date().toLocaleString());
+    } catch (err) {
+      console.error('Error fetching invoices:', err);
+      setError('Error al cargar los datos. Por favor, intenta de nuevo.');
+    } finally {
+      setLoading(false);
     }
-    
-    setInvoices(demoInvoices);
-    setTotalAmount(demoTotal);
-    setInvoiceCount(demoInvoices.length);
-    setAverageAmount(demoInvoices.length > 0 ? demoTotal / demoInvoices.length : 0);
-    setMonthlyData(demoMonthlyData);
   };
 
-  // Renderizar gráfico de barras simple con CSS
+  const getCondicionOperacionText = (codigo: number): string => {
+    switch (codigo) {
+      case 1:
+        return 'Contado';
+      case 2:
+        return 'Crédito';
+      case 3:
+        return 'Otro';
+      default:
+        return 'Desconocido';
+    }
+  };
+
+  const getFormaPagoText = (codigo: string): string => {
+    switch (codigo) {
+      case '01':
+        return 'Efectivo';
+      case '02':
+        return 'Tarjeta Débito';
+      case '03':
+        return 'Tarjeta Crédito';
+      case '04':
+        return 'Cheque';
+      case '05':
+        return 'Transferencia';
+      case '06':
+        return 'Depósito Bancario';
+      case '07':
+        return 'Giro';
+      case '08':
+        return 'Tarjeta Prepago';
+      case '99':
+        return 'Otro';
+      default:
+        return 'Desconocido';
+    }
+  };
+
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat('es-SV', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2
+    }).format(amount);
+  };
+
+  const formatDate = (dateString: string): string => {
+    if (!dateString) return 'Fecha desconocida';
+    
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('es-SV', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (error) {
+      return 'Fecha inválida';
+    }
+  };
+
   const renderBarChart = () => {
+    if (Object.keys(monthlyData).length === 0) {
+      return (
+        <div className="empty-chart-message">
+          No hay datos disponibles para mostrar en el gráfico
+        </div>
+      );
+    }
+
     const months = Object.keys(monthlyData).sort((a, b) => {
       const [monthA, yearA] = a.split('/').map(Number);
       const [monthB, yearB] = b.split('/').map(Number);
       
-      if (yearA !== yearB) return yearA - yearB;
+      if (yearA !== yearB) {
+        return yearA - yearB;
+      }
       return monthA - monthB;
     });
-    
-    const maxValue = Math.max(...Object.values(monthlyData));
-    
+
+    // Obtener el valor máximo para escalar el gráfico
+    const maxValue = Math.max(...months.map(month => monthlyData[month].total));
+
     return (
-      <div className="chart-container">
-        <h3>Facturación Mensual</h3>
-        <div className="bar-chart">
-          {months.map((month) => (
-            <div key={month} className="bar-chart-item">
-              <div className="bar-label">{month}</div>
-              <div className="bar-container">
+      <div className="chart">
+        {months.map((month) => {
+          const { total } = monthlyData[month];
+          const heightPercentage = (total / maxValue) * 100;
+          
+          const [monthNum, year] = month.split('/');
+          const monthNames = [
+            'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+            'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
+          ];
+          const monthName = monthNames[parseInt(monthNum) - 1];
+          
+          return (
+            <div className="bar-container" key={month}>
+              <div className="bar">
                 <div 
-                  className="bar" 
-                  style={{ height: `${(monthlyData[month] / maxValue) * 100}%` }}
-                >
-                  <span className="bar-value">${monthlyData[month].toLocaleString()}</span>
-                </div>
+                  className="bar-fill" 
+                  style={{ height: `${heightPercentage}%` }}
+                  title={`${formatCurrency(total)}`}
+                ></div>
               </div>
+              <div className="bar-value">{formatCurrency(total)}</div>
+              <div className="bar-label">{`${monthName} ${year}`}</div>
             </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
     );
   };
 
+  const renderTopClients = () => {
+    if (Object.keys(clientData).length === 0) {
+      return (
+        <div className="empty-table-message">
+          No hay datos de clientes disponibles
+        </div>
+      );
+    }
+
+    // Ordenar clientes por total facturado (de mayor a menor)
+    const sortedClients = Object.entries(clientData)
+      .sort(([, a], [, b]) => b.total - a.total)
+      .slice(0, 5); // Top 5 clientes
+
+    return (
+      <table className="invoices-table">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>NIT</th>
+            <th>Facturas</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sortedClients.map(([nit, data]) => (
+            <tr key={nit}>
+              <td>{data.name}</td>
+              <td>{nit}</td>
+              <td>{data.count}</td>
+              <td>{formatCurrency(data.total)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  };
+
+  const renderRecentInvoices = () => {
+    if (invoices.length === 0) {
+      return (
+        <div className="empty-table-message">
+          No hay facturas recientes para mostrar
+        </div>
+      );
+    }
+
+    return (
+      <table className="invoices-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Número</th>
+            <th>Cliente</th>
+            <th>Condición</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {invoices.slice(0, 5).map((invoice) => (
+            <tr key={invoice.id}>
+              <td>{formatDate(invoice.identificacion?.fecEmi || '')}</td>
+              <td>{invoice.identificacion?.numeroControl || 'N/A'}</td>
+              <td>{invoice.receptor?.nombre || 'Cliente desconocido'}</td>
+              <td>
+                {getCondicionOperacionText(invoice.resumen?.condicionOperacion || 0)}
+              </td>
+              <td>{formatCurrency(invoice.resumen?.montoTotalOperacion || 0)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="reports-container">
+        <h1 className="reports-title">Reportes</h1>
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Cargando datos de facturas...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="reports-container">
+        <h1 className="reports-title">Reportes</h1>
+        <div className="error-container">
+          <h2>Error al cargar los datos</h2>
+          <p>{error}</p>
+          <button className="retry-button" onClick={fetchInvoices}>
+            Intentar de nuevo
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (invoices.length === 0) {
+    return (
+      <div className="reports-container">
+        <h1 className="reports-title">Reportes</h1>
+        <div className="empty-data-container">
+          <h2>No hay datos de facturas</h2>
+          <p>No se encontraron facturas en la base de datos.</p>
+          <button className="retry-button" onClick={fetchInvoices}>
+            Actualizar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="reports-container">
-      <h1 className="reports-title">Reportes y Estadísticas</h1>
+      <h1 className="reports-title">Reportes de Facturación</h1>
       
-      {loading ? (
-        <div className="loading-indicator">Cargando datos...</div>
-      ) : error ? (
-        <div className="error-message">{error}</div>
-      ) : (
-        <>
-          {usingDemoData && (
-            <div className="demo-data-notice">
-              Mostrando datos de demostración. Los datos reales aparecerán cuando haya facturas en el sistema.
-            </div>
-          )}
-          
-          <div className="stats-cards">
-            <div className="stat-card">
-              <h3>Total Facturado</h3>
-              <div className="stat-value">${totalAmount.toLocaleString()}</div>
-            </div>
-            
-            <div className="stat-card">
-              <h3>Facturas Emitidas</h3>
-              <div className="stat-value">{invoiceCount}</div>
-            </div>
-            
-            <div className="stat-card">
-              <h3>Promedio por Factura</h3>
-              <div className="stat-value">${averageAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
-            </div>
-          </div>
-          
+      <div className="summary-cards">
+        <div className="card">
+          <div className="card-title">Total Facturado</div>
+          <div className="card-value">{formatCurrency(totalInvoiced)}</div>
+        </div>
+        <div className="card">
+          <div className="card-title">Total IVA</div>
+          <div className="card-value">{formatCurrency(totalIVA)}</div>
+        </div>
+        <div className="card">
+          <div className="card-title">Facturas Emitidas</div>
+          <div className="card-value">{invoices.length}</div>
+        </div>
+        <div className="card">
+          <div className="card-title">Clientes Activos</div>
+          <div className="card-value">{Object.keys(clientData).length}</div>
+        </div>
+      </div>
+      
+      <div className="reports-grid">
+        <div className="chart-container">
+          <h3>Facturación Mensual</h3>
           {renderBarChart()}
-          
-          <div className="recent-invoices">
-            <h3>Facturas Recientes</h3>
-            <table className="invoices-table">
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Emisor</th>
-                  <th>Receptor</th>
-                  <th>Total</th>
-                  <th>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoices.slice(0, 5).map((invoice) => (
-                  <tr key={invoice.id}>
-                    <td>{invoice.fecha}</td>
-                    <td>{invoice.emisor}</td>
-                    <td>{invoice.receptor}</td>
-                    <td>${invoice.total.toLocaleString()}</td>
-                    <td>
-                      <span className={`status-badge status-${invoice.estado.toLowerCase()}`}>
-                        {invoice.estado}
-                      </span>
-                    </td>
+        </div>
+        
+        <div className="recent-invoices">
+          <h3>Facturas Recientes</h3>
+          {renderRecentInvoices()}
+        </div>
+        
+        <div className="chart-container">
+          <h3>Principales Clientes</h3>
+          {renderTopClients()}
+        </div>
+        
+        <div className="recent-invoices">
+          <h3>Métodos de Pago</h3>
+          <table className="invoices-table">
+            <thead>
+              <tr>
+                <th>Método</th>
+                <th>Cantidad</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(
+                invoices.reduce((acc: {[key: string]: {count: number, total: number}}, invoice) => {
+                  if (invoice.resumen?.pagos && invoice.resumen.pagos.length > 0) {
+                    const codigo = invoice.resumen.pagos[0].codigo || 'desconocido';
+                    if (!acc[codigo]) {
+                      acc[codigo] = { count: 0, total: 0 };
+                    }
+                    acc[codigo].count += 1;
+                    acc[codigo].total += invoice.resumen.montoTotalOperacion || 0;
+                  }
+                  return acc;
+                }, {})
+              )
+                .sort(([, a], [, b]) => b.total - a.total)
+                .map(([codigo, data]) => (
+                  <tr key={codigo}>
+                    <td>{getFormaPagoText(codigo)}</td>
+                    <td>{data.count}</td>
+                    <td>{formatCurrency(data.total)}</td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
+                ))
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div className="last-update">
+        Última actualización: {lastUpdate}
+        <button 
+          className="refresh-button" 
+          onClick={fetchInvoices}
+          title="Actualizar datos"
+        >
+          ↻
+        </button>
+      </div>
     </div>
   );
 };
