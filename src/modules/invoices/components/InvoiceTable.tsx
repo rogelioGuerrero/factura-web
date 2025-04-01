@@ -25,7 +25,8 @@ const InvoiceTable = ({ onRowClick }: InvoiceTableProps) => {
       setLoading(true);
       const result = await invoiceService.getInvoices(pagination, sortBy, filters);
       setInvoices(result.data);
-      setTotalPages(result.totalPages);
+      //setTotalPages(result.totalPages);
+      
     } catch (error) {
       console.error('Error al cargar facturas:', error);
     } finally {
@@ -157,3 +158,8 @@ const InvoiceTable = ({ onRowClick }: InvoiceTableProps) => {
 };
 
 export default InvoiceTable;
+
+export type PaginationOptions = {
+  page: number;
+  pageSize: number;
+};

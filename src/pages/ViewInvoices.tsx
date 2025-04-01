@@ -3,7 +3,9 @@ import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 import { FieldsService } from '@/modules/fields/models/FieldsService';
 import { FieldConfig } from '@/modules/fields/types';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom'
+import { ExportButton } from '../modules/export';
+
 
 interface Invoice {
   id: string;
@@ -54,6 +56,34 @@ const ViewInvoices: React.FC = () => {
     loadData();
   }, []);
 
+  // Dentro del componente ViewInvoices, añade esta función para preparar los datos
+  const prepareDataForExport = () => {
+    // Usamos los campos seleccionados para determinar qué exportar
+    const exportableFields = fields.map(field => ({
+      id: field.id,
+      label: field.label || field.id,
+      // Usar el id como path si no hay path específico
+      path: field.id
+    }));
+  
+  // Transformamos los datos para la exportación
+  return invoices.map(invoice => {
+    const exportItem: any = {};
+    
+    // Para cada campo seleccionado, obtenemos su valor
+    exportableFields.forEach(field => {
+      exportItem[field.label] = getNestedValue(invoice.data, field.path);
+      
+      // Aplicamos formato si es necesario (por ejemplo, para fechas)
+      if (field.id.toLowerCase().includes('fecha') || field.id.toLowerCase().includes('date')) {
+        exportItem[field.label] = formatDate(exportItem[field.label]);
+      }
+    });
+    
+    return exportItem;
+  });
+};  
+  
   // Obtener valor de un campo anidado
   const getNestedValue = (obj: any, path: string) => {
     try {
@@ -109,23 +139,43 @@ const ViewInvoices: React.FC = () => {
 
   return (
     <div className="view-invoices-container" style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0 }}>Facturas Importadas</h1>
-        <Link 
-          to="/" 
-          style={{
-            backgroundColor: '#4caf50',
-            color: 'white',
-            padding: '10px 20px',
-            borderRadius: '4px',
-            textDecoration: 'none',
-            fontWeight: 'bold'
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+    <h1 style={{ margin: 0 }}>Facturas Importadas</h1>
+    <div style={{ display: 'flex', gap: '10px' }}>
+      {/* Botón de exportación */}
+      {invoices.length > 0 && (
+        <ExportButton 
+          data={prepareDataForExport()} 
+          options={{
+            format: 'csv',
+            filename: 'facturas-exportadas',
+            sheetName: 'Facturas'
           }}
-        >
-          Volver al Inicio
-        </Link>
-      </div>
-      
+          label="Exportar CSV"
+          className="export-button"
+          onExportComplete={(success: any) => {
+            if (success) {
+              // Podrías mostrar una notificación aquí
+              console.log('Exportación completada con éxito');
+            }
+          }}
+        />
+      )}
+    <Link 
+      to="/" 
+      style={{
+        backgroundColor: '#4caf50',
+        color: 'white',
+        padding: '10px 20px',
+        borderRadius: '4px',
+        textDecoration: 'none',
+        fontWeight: 'bold'
+      }}
+    >
+      Volver al Inicio 
+    </Link>
+  </div>
+</div>
       {error && (
         <div style={{ 
           padding: '15px', 

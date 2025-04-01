@@ -96,6 +96,18 @@ export const TableView = ({ onRowClick }: TableViewProps) => {
                 <td className="px-6 py-4">{invoice.receptor.nombre}</td>
                 <td className="px-6 py-4">{invoice.identificacion.codigoGeneracion}</td>
                 <td className="px-6 py-4">${invoice.resumen.montoTotalOperacion.toFixed(2)}</td>
+                <td className="px-6 py-4 text-center">
+                  <button 
+                    className="bg-blue-500 text-white border-none px-3 py-2 rounded text-sm"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent row click event from firing
+                      // Navigate to details page or show modal with invoice details
+                      alert(`Ver detalles de la factura ${invoice.identificacion.codigoGeneracion}`);
+                    }}
+                  >
+                    Ver Detalles
+                  </button>
+                </td>
               </tr>
             ))
           )}
