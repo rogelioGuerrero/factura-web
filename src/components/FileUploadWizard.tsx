@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import FileUploadStep from './steps/FileUploadStep';
 import DataTableStep from './steps/DataTableStep';
-import PreviewModal from './PreviewModal';
+import PreviewModal from '@/shared/components/PreviewModal';
 import { InvoiceData } from '../types/invoice';
-import { InvoiceController } from '../controllers/InvoiceController';
+import { InvoiceController } from '@/modules/invoices/models/InvoiceController';
 
 const FileUploadWizard = () => {
   const [currentStep, setCurrentStep] = useState(1);
