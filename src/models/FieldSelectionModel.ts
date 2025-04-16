@@ -6,6 +6,7 @@ export interface FieldConfig {
   label: string;
   category: string;
   selected: boolean;
+  path: string;
   isCustom?: boolean;
   order?: number;
 }
@@ -33,36 +34,36 @@ export enum FieldCategory {
  */
 export const DEFAULT_FIELDS: FieldConfig[] = [
   // Campos de identificación
-  { id: 'identificacion.numeroFactura', label: 'Número de Factura', category: FieldCategory.IDENTIFICACION, selected: true },
-  { id: 'identificacion.numeroControl', label: 'Número de Control', category: FieldCategory.IDENTIFICACION, selected: true },
-  { id: 'identificacion.fechaEmision', label: 'Fecha de Emisión', category: FieldCategory.IDENTIFICACION, selected: true },
-  { id: 'identificacion.tipoDocumento', label: 'Tipo de Documento', category: FieldCategory.IDENTIFICACION, selected: false },
-  { id: 'identificacion.selloRecibido', label: 'Sello Recibido', category: FieldCategory.IDENTIFICACION, selected: false },
-  { id: 'identificacion.codigoGeneracion', label: 'Código de Generación', category: FieldCategory.IDENTIFICACION, selected: false },
+  { id: 'identificacion.numeroFactura', label: 'Número de Factura', category: FieldCategory.IDENTIFICACION, selected: true, path: 'identificacion.numeroFactura' },
+  { id: 'identificacion.numeroControl', label: 'Número de Control', category: FieldCategory.IDENTIFICACION, selected: true, path: 'identificacion.numeroControl' },
+  { id: 'identificacion.fechaEmision', label: 'Fecha de Emisión', category: FieldCategory.IDENTIFICACION, selected: true, path: 'identificacion.fechaEmision' },
+  { id: 'identificacion.tipoDocumento', label: 'Tipo de Documento', category: FieldCategory.IDENTIFICACION, selected: false, path: 'identificacion.tipoDocumento' },
+  { id: 'identificacion.selloRecibido', label: 'Sello Recibido', category: FieldCategory.IDENTIFICACION, selected: false, path: 'identificacion.selloRecibido' },
+  { id: 'identificacion.codigoGeneracion', label: 'Código de Generación', category: FieldCategory.IDENTIFICACION, selected: false, path: 'identificacion.codigoGeneracion' },
   
   // Campos del emisor
-  { id: 'emisor.nombre', label: 'Nombre del Emisor', category: FieldCategory.EMISOR, selected: true },
-  { id: 'emisor.nrc', label: 'NRC Emisor', category: FieldCategory.EMISOR, selected: true },
-  { id: 'emisor.nit', label: 'NIT Emisor', category: FieldCategory.EMISOR, selected: false },
-  { id: 'emisor.actividad', label: 'Actividad Emisor', category: FieldCategory.EMISOR, selected: false },
+  { id: 'emisor.nombre', label: 'Nombre del Emisor', category: FieldCategory.EMISOR, selected: true, path: 'emisor.nombre' },
+  { id: 'emisor.nrc', label: 'NRC Emisor', category: FieldCategory.EMISOR, selected: true, path: 'emisor.nrc' },
+  { id: 'emisor.nit', label: 'NIT Emisor', category: FieldCategory.EMISOR, selected: false, path: 'emisor.nit' },
+  { id: 'emisor.actividad', label: 'Actividad Emisor', category: FieldCategory.EMISOR, selected: false, path: 'emisor.actividad' },
   
   // Campos del receptor
-  { id: 'receptor.nombre', label: 'Nombre del Receptor', category: FieldCategory.RECEPTOR, selected: true },
-  { id: 'receptor.nrc', label: 'NRC Receptor', category: FieldCategory.RECEPTOR, selected: false },
-  { id: 'receptor.nit', label: 'NIT Receptor', category: FieldCategory.RECEPTOR, selected: false },
+  { id: 'receptor.nombre', label: 'Nombre del Receptor', category: FieldCategory.RECEPTOR, selected: true, path: 'receptor.nombre' },
+  { id: 'receptor.nrc', label: 'NRC Receptor', category: FieldCategory.RECEPTOR, selected: false, path: 'receptor.nrc' },
+  { id: 'receptor.nit', label: 'NIT Receptor', category: FieldCategory.RECEPTOR, selected: false, path: 'receptor.nit' },
   
   // Campos de detalles
-  { id: 'cuerpoDocumento.0.descripcion', label: 'Descripción', category: FieldCategory.DETALLES, selected: true },
-  { id: 'cuerpoDocumento.0.cantidad', label: 'Cantidad', category: FieldCategory.DETALLES, selected: true },
-  { id: 'cuerpoDocumento.0.precioUnitario', label: 'Precio Unitario', category: FieldCategory.DETALLES, selected: true },
-  { id: 'cuerpoDocumento.0.subtotal', label: 'Subtotal', category: FieldCategory.DETALLES, selected: true },
+  { id: 'cuerpoDocumento.0.descripcion', label: 'Descripción', category: FieldCategory.DETALLES, selected: true, path: 'cuerpoDocumento.0.descripcion' },
+  { id: 'cuerpoDocumento.0.cantidad', label: 'Cantidad', category: FieldCategory.DETALLES, selected: true, path: 'cuerpoDocumento.0.cantidad' },
+  { id: 'cuerpoDocumento.0.precioUnitario', label: 'Precio Unitario', category: FieldCategory.DETALLES, selected: true, path: 'cuerpoDocumento.0.precioUnitario' },
+  { id: 'cuerpoDocumento.0.subtotal', label: 'Subtotal', category: FieldCategory.DETALLES, selected: true, path: 'cuerpoDocumento.0.subtotal' },
   
   // Campos de resumen
-  { id: 'resumen.totalExenta', label: 'Total Exenta', category: FieldCategory.RESUMEN, selected: false },
-  { id: 'resumen.totalNoSujeta', label: 'Total No Sujeta', category: FieldCategory.RESUMEN, selected: false },
-  { id: 'resumen.totalGravada', label: 'Total Gravada', category: FieldCategory.RESUMEN, selected: true },
-  { id: 'resumen.valor', label: 'Valor', category: FieldCategory.RESUMEN, selected: false },
-  { id: 'resumen.montoTotalOperacion', label: 'Monto Total Operación', category: FieldCategory.RESUMEN, selected: true }
+  { id: 'resumen.totalExenta', label: 'Total Exenta', category: FieldCategory.RESUMEN, selected: false, path: 'resumen.totalExenta' },
+  { id: 'resumen.totalNoSujeta', label: 'Total No Sujeta', category: FieldCategory.RESUMEN, selected: false, path: 'resumen.totalNoSujeta' },
+  { id: 'resumen.totalGravada', label: 'Total Gravada', category: FieldCategory.RESUMEN, selected: true, path: 'resumen.totalGravada' },
+  { id: 'resumen.valor', label: 'Valor', category: FieldCategory.RESUMEN, selected: false, path: 'resumen.valor' },
+  { id: 'resumen.montoTotalOperacion', label: 'Monto Total Operación', category: FieldCategory.RESUMEN, selected: true, path: 'resumen.montoTotalOperacion' }
 ];
 
 /**

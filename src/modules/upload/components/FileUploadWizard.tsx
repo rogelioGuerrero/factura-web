@@ -101,27 +101,6 @@ const FileUploadWizard: React.FC = () => {
     setIsProcessing(false);
   }, []);
 
-  // Renderizar los pasos del asistente
-  const renderWizardSteps = () => {
-    return (
-      <div className="wizard-steps">
-        <div className={`step ${currentStep >= 1 ? currentStep === 1 ? 'active' : 'completed' : ''}`}>
-          <div className="step-number">1</div>
-          <div className="step-label">Seleccionar Archivos</div>
-        </div>
-        <div className={`step-connector ${currentStep > 1 ? 'completed' : ''}`}></div>
-        <div className={`step ${currentStep >= 2 ? currentStep === 2 ? 'active' : 'completed' : ''}`}>
-          <div className="step-number">2</div>
-          <div className="step-label">Revisar Facturas</div>
-        </div>
-        <div className={`step-connector ${currentStep > 2 ? 'completed' : ''}`}></div>
-        <div className={`step ${currentStep === 3 ? 'active' : ''}`}>
-          <div className="step-number">3</div>
-          <div className="step-label">Completado</div>
-        </div>
-      </div>
-    );
-  };
 
   // Renderizar el paso actual
   const renderCurrentStep = () => {
@@ -197,30 +176,38 @@ const FileUploadWizard: React.FC = () => {
     }
   };
 
+  // Estado para mostrar mensaje de guardado local
+  const [showLocalSaveMsg, setShowLocalSaveMsg] = useState(false);
+
   return (
     <FieldsProvider>
       <div className="file-upload-wizard">
-        <h1 className="wizard-title">Asistente de Importación de Facturas</h1>
-        
+        <div className="flex flex-col items-center mb-8 w-full">
+          <h2 className="text-3xl font-bold text-center mb-8">Asistente de Importación de Facturas</h2>
+          <ul className="steps steps-horizontal w-full max-w-xl mb-8">
+            <li className={`step ${currentStep >= 1 ? 'step-primary' : ''}`}>Seleccionar Archivos</li>
+            <li className={`step ${currentStep >= 2 ? 'step-primary' : ''}`}>Revisar Facturas</li>
+            <li className={`step ${currentStep >= 3 ? 'step-primary' : ''}`}>Completado</li>
+          </ul>
+        </div>
         {error && (
           <div className="error-message">
             <span className="error-icon">⚠️</span>
             <span>{error}</span>
-            <button 
-              onClick={() => setError(null)} 
-              className="close-error"
-              aria-label="Cerrar mensaje de error"
-            >
-              ×
-            </button>
           </div>
         )}
-        
-        {renderWizardSteps()}
         {renderCurrentStep()}
+        {showLocalSaveMsg && (
+          <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-green-100 text-green-800 px-6 py-3 rounded shadow-lg z-50 text-lg font-semibold">
+            ¡Facturas guardadas en este navegador!
+          </div>
+        )}
       </div>
     </FieldsProvider>
   );
 };
 
 export default FileUploadWizard;
+
+
+

@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef, DragEvent } from 'react';
-import { InvoiceController } from '../controllers/InvoiceController';
-import { InvoiceData } from '../types/invoice';
+import { InvoiceController } from '../models/InvoiceController';
+import { InvoiceData } from '../../../types/invoice';
 
 interface InvoiceImporterProps {
   onImportComplete: (invoices: InvoiceData[]) => void;

@@ -46,15 +46,6 @@ export const modules: ModuleConfig[] = [
     enabled: false, // Este módulo aún no está habilitado
     bgColor: 'bg-yellow-50',
     hoverColor: 'hover:bg-yellow-100'
-  },
-  {
-    id: 'settings',
-    title: 'Configuración',
-    description: 'Personalice la aplicación según sus necesidades y preferencias',
-    path: '/settings',
-    enabled: false, // Este módulo aún no está habilitado
-    bgColor: 'bg-gray-50',
-    hoverColor: 'hover:bg-gray-100'
   }
 ];
 

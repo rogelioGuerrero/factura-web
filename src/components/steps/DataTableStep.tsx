@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { InvoiceData } from '../../types/invoice';
 import { FieldConfig } from '../../models/FieldSelectionModel';
 import FieldSelector from '../FieldSelector';
-import { flattenInvoiceData, formatFieldValue } from '../../utils/fieldExtractor';
+import { flattenInvoiceData, formatFieldValue } from '../../shared/utils/fieldExtractor';
 import { FieldSelectionController } from '../../controllers/FieldSelectionController';
 
 // Obtener el controlador fuera del componente para evitar recreaciones
@@ -124,42 +124,47 @@ const DataTableStep = ({ data, onPrev }: DataTableStepProps) => {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              {selectedFields.map(field => (
-                <th 
-                  key={field.id}
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  {field.label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredData.length > 0 ? (
-              filteredData.map((item, index) => (
-                <tr key={index} className="hover:bg-gray-50">
-                  {selectedFields.map(field => (
-                    <td key={field.id} className="px-4 py-3 text-sm text-gray-900">
-                      {formatFieldValue(item[field.id], field.id)}
-                    </td>
-                  ))}
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={selectedFields.length} className="px-4 py-4 text-center text-sm text-gray-500">
-                  {searchTerm 
-                    ? 'No se encontraron resultados para la búsqueda.' 
-                    : 'No hay datos disponibles.'}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+  <table className="table table-xs">
+    <thead>
+      <tr>
+        {selectedFields.map((field, colIdx) => (
+          <th
+            key={field.id}
+            className={`bg-base-200 text-base-content uppercase tracking-wider font-semibold text-xs px-4 py-3 text-left sticky top-0 z-10 ${colIdx === 0 ? 'left-0 bg-base-200' : ''}`}
+            style={colIdx === 0 ? { minWidth: 120, maxWidth: 220 } : {}}
+          >
+            {field.label}
+          </th>
+        ))}
+      </tr>
+    </thead>
+    <tbody>
+      {filteredData.length > 0 ? (
+        filteredData.map((item, rowIdx) => (
+          <tr key={rowIdx} className="hover">
+            {selectedFields.map((field, colIdx) => (
+              <td
+                key={field.id}
+                className={`px-4 py-3 text-sm ${colIdx === 0 ? 'sticky left-0 bg-base-100 z-10' : ''}`}
+                style={colIdx === 0 ? { minWidth: 120, maxWidth: 220 } : {}}
+              >
+                {formatFieldValue(item[field.id], field.id)}
+              </td>
+            ))}
+          </tr>
+        ))
+      ) : (
+        <tr>
+          <td colSpan={selectedFields.length} className="px-4 py-4 text-center text-sm text-gray-500">
+            {searchTerm
+              ? 'No se encontraron resultados para la búsqueda.'
+              : 'No hay datos disponibles.'}
+          </td>
+        </tr>
+      )}
+    </tbody>
+  </table>
+</div>
     </div>
   );
 };

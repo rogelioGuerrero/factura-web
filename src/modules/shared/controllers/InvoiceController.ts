@@ -3,6 +3,12 @@ import { FieldSelectionController } from './FieldSelectionController';
 import { InvoiceService } from '@/modules/invoices/models/InvoiceService';
 
 export class InvoiceController {
+  /**
+   * Obtiene todas las facturas desde Firebase
+   */
+  public async getAllInvoices() {
+    return await this.invoiceService.getAllInvoices();
+  }
   private fieldController: FieldSelectionController;
   private invoiceService: InvoiceService;
 

@@ -139,6 +139,15 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
     setPagination(prev => ({ ...prev, page: 1, pageSize: newSize }));
   }, []);
 
+  const deleteInvoice = useCallback(async (codigoGeneracion: string) => {
+    try {
+      await invoiceService.deleteInvoice(codigoGeneracion);
+      await loadInvoices();
+    } catch (err) {
+      throw err;
+    }
+  }, [invoiceService, loadInvoices]);
+
   return {
     invoices,
     loading,
@@ -155,6 +164,7 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
       handlePageChange,
       setPageSize,
       refresh: loadInvoices,
+      deleteInvoice,
     }
   };
 }

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { HiHome } from 'react-icons/hi';
 
 /**
  * Botón para regresar a la página principal desde cualquier módulo
@@ -8,9 +9,10 @@ const HomeButton: React.FC = () => {
   return (
     <Link 
       to="/" 
-      className="home-button fixed top-4 left-4 z-50 bg-white p-2 rounded-full shadow-md hover:shadow-lg transition-all"
+      className="home-button fixed bottom-4 right-4 z-50 bg-white p-2 rounded-full shadow-md hover:shadow-lg transition-all"
       title="Volver al inicio"
     >
+      
       <svg 
         className="w-6 h-6 text-blue-600" 
         fill="none" 

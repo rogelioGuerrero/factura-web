@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { MenuController } from '../controllers/MenuController';
+import { MenuController } from '../models/MenuController';
 import { NavItem } from '../models/NavbarModel';
 import './MenuManager.css';
 

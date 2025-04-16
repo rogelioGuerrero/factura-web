@@ -137,6 +137,9 @@ export interface InvoiceData {
   extension?: Extension;
   firmaElectronica?: string;
   selloRecibido?: string;
+  totalExenta?: number;
+  ventaNoSuj?: number;
+  
 }
 
 export interface InvoiceSummary {
@@ -146,6 +149,7 @@ export interface InvoiceSummary {
   receptorNombre: string;
   montoTotal: number;
   estado?: string;
+  totalGravada?: number;
 }
 
 export interface ProcessResult {

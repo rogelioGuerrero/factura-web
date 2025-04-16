@@ -11,5 +11,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         {children}
       </div>
     </div>
+    
   );
 };

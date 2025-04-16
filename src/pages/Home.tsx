@@ -1,78 +1,208 @@
 import { Link } from 'react-router-dom';
 import './Home.css';
+import { useState } from 'react';
+import { colorIconMap } from '../icons/ColorIconsMap';
+import Card from '../components/Card';
+import { 
+  DocumentTextIcon, 
+  CloudArrowUpIcon, 
+  Cog6ToothIcon, 
+  ChartBarIcon,
+  MapIcon,
+  TruckIcon,
+  PresentationChartLineIcon,
+  ClockIcon
+} from '@heroicons/react/24/outline';
+
+// Componente auxiliar para iconos con hover
+const IconWithHover = ({
+  BaseIcon,
+  ColorIcon,
+  className = "",
+  style = {},
+  ...props
+}: {
+  BaseIcon: React.ElementType;
+  ColorIcon?: React.ElementType;
+  className?: string;
+  style?: React.CSSProperties;
+}) => {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      className={className}
+      style={style}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      {...props}
+    >
+      {hovered && ColorIcon ? (
+        <ColorIcon style={{ width: 24, height: 24 }} />
+      ) : (
+        <BaseIcon className="w-6 h-6" />
+      )}
+    </div>
+  );
+};
 
 const Home = () => {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="hero-section bg-blue-600 text-white py-16">
+    <div className="min-h-screen bg-base-100">
+      {/* Hero Section más compacto */}
+      <div className="bg-gradient-to-r from-primary to-secondary py-10">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl font-bold mb-4">Sistema de Gestión de Facturas Electrónicas</h1>
-          <p className="text-xl mb-8">
-            Bienvenido a la plataforma de administración de facturas electrónicas. Utilice las herramientas
-            disponibles para gestionar sus documentos fiscales de manera eficiente.
+          <h1 className="text-4xl font-bold mb-3 text-black">Soluciones Empresariales</h1>
+          <p className="text-lg mb-5 max-w-2xl mx-auto text-black">
+            Gestiona tus procesos y servicios de manera eficiente desde cualquier dispositivo.
           </p>
+          <div className="flex justify-center gap-3">
+            <Link to="/invoices" className="btn btn-sm btn-primary bg-white text-primary hover:bg-white/90">
+              Suscripción
+            </Link>
+            <Link to="/about" className="btn btn-sm btn-ghost text-black border-black hover:bg-white/10">
+              Conocer más
+            </Link>
+          </div>
         </div>
       </div>
       
-      <main className="container mx-auto px-4 py-12">
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Ver Facturas */}
-          <Link
-            to="/view-invoices"
-            className="p-6 bg-green-50 rounded-lg hover:bg-green-100 transition-colors shadow-md flex flex-col items-center text-center"
-          >
-            <div className="mb-4">
-              <svg className="w-16 h-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Ver Facturas</h3>
-            <p className="text-gray-600">Consulta y visualiza las facturas almacenadas en la base de datos</p>
-          </Link>
+      <main className="container mx-auto px-4 py-8">
+        {/* Sección 1: Gestión de Facturas */}
+        <div className="mb-10">
+          <div className="flex items-center mb-4">
+            <div className="h-8 w-1 bg-primary rounded-full mr-3"></div>
+            <h2 className="text-2xl font-bold text-black">Gestión de Facturas</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card color="primary" tooltip="Automatiza la carga de tus facturas electrónicas" shadow="sm">
+              <IconWithHover
+                BaseIcon={CloudArrowUpIcon}
+                ColorIcon={colorIconMap.CloudArrowUpIcon}
+                className="w-10 h-10 rounded-full flex items-center justify-center mb-3 bg-primary/10 text-primary"
+              />
+              <h2 className="card-title text-base font-semibold mb-2 text-black">Importación Automática</h2>
+              <p className="text-neutral-800 text-xs">Sube y valida tus facturas electrónicas fácilmente.</p>
+              <div className="card-actions justify-end mt-3">
+                <Link to="/importar-facturas" className="btn btn-primary btn-xs">
+                  Acceder
+                </Link>
+              </div>
+            </Card>
 
-          {/* Gestor de Facturas */}
-          <Link
-            to="/invoices"
-            className="p-6 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors shadow-md flex flex-col items-center text-center"
-          >
-            <div className="mb-4">
-              <svg className="w-16 h-16 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Gestor de Facturas</h3>
-            <p className="text-gray-600">Carga y procesa archivos JSON de facturas electrónicas</p>
-          </Link>
+            <Card color="primary" tooltip="Consulta y organiza tus comprobantes" shadow="sm">
+              <IconWithHover
+                BaseIcon={DocumentTextIcon}
+                ColorIcon={colorIconMap.DocumentTextIcon}
+                className="w-10 h-10 rounded-full flex items-center justify-center mb-3 bg-primary/10 text-primary"
+              />
+              <h2 className="card-title text-base font-semibold mb-2 text-black">Consulta de Facturas</h2>
+              <p className="text-neutral-800 text-xs">Revisa y organiza tus comprobantes en todo momento.</p>
+              <div className="card-actions justify-end mt-3">
+                <Link to="/view-invoices" className="btn btn-primary btn-xs">
+                  Acceder
+                </Link>
+              </div>
+            </Card>
 
-          {/* Gestor de Campos */}
-          <Link
-            to="/custom-fields"
-            className="p-6 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors shadow-md flex flex-col items-center text-center"
-          >
-            <div className="mb-4">
-              <svg className="w-16 h-16 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Gestor de Campos</h3>
-            <p className="text-gray-600">Configura los campos y propiedades para la visualización de facturas</p>
-          </Link>
+            <Card color="primary" tooltip="Personaliza la información fiscal relevante" shadow="sm">
+              <IconWithHover
+                BaseIcon={Cog6ToothIcon}
+                ColorIcon={colorIconMap.Cog6ToothIcon}
+                className="w-10 h-10 rounded-full flex items-center justify-center mb-3 bg-primary/10 text-primary"
+              />
+              <h2 className="card-title text-base font-semibold mb-2 text-black">Configuración de Campos</h2>
+              <p className="text-neutral-800 text-xs">Ajusta la visualización de información fiscal según tus necesidades.</p>
+              <div className="card-actions justify-end mt-3">
+                <Link to="/custom-fields" className="btn btn-primary btn-xs">
+                  Acceder
+                </Link>
+              </div>
+            </Card>
 
-          {/* Reportes */}
-          <Link
-            to="/reports"
-            className="p-6 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors shadow-md flex flex-col items-center text-center"
-          >
-            <div className="mb-4">
-              <svg className="w-16 h-16 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Reportes</h3>
-            <p className="text-gray-600">Genera y visualiza informes y estadísticas de tus facturas</p>
-          </Link>
+            <Card color="primary" tooltip="Genera informes dinámicos para tu gestión contable" shadow="sm">
+              <IconWithHover
+                BaseIcon={ChartBarIcon}
+                ColorIcon={colorIconMap.ChartBarIcon}
+                className="w-10 h-10 rounded-full flex items-center justify-center mb-3 bg-primary/10 text-primary"
+              />
+              <h2 className="card-title text-base font-semibold mb-2 text-black">Reportes Dinámicos</h2>
+              <p className="text-neutral-800 text-xs">Genera y exporta informes para tu gestión contable.</p>
+              <div className="card-actions justify-end mt-3">
+                <Link to="/reports" className="btn btn-primary btn-xs">
+                  Acceder
+                </Link>
+              </div>
+            </Card>
+          </div>
+        </div>
+
+        {/* Sección 2: Optimización de Transporte */}
+        <div>
+          <div className="flex items-center mb-4">
+            <div className="h-8 w-1 bg-primary rounded-full mr-3"></div>
+            <h2 className="text-2xl font-bold text-black">Optimización de Transporte</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card shadow="sm" tooltip="Optimiza y automatiza tus rutas de entrega">
+              <IconWithHover
+                BaseIcon={MapIcon}
+                ColorIcon={colorIconMap.MapIcon}
+                className="w-10 h-10 rounded-full flex items-center justify-center mb-3 bg-primary/10 text-primary"
+              />
+              <h2 className="card-title text-base font-semibold mb-2 text-black">Planeación Automática de Rutas</h2>
+              <p className="text-neutral-800 text-xs">Calcula los trayectos más eficientes para tus operaciones.</p>
+              <div className="card-actions justify-end mt-3">
+                <Link to="/route-optimization" className="btn btn-primary btn-xs">
+                  Acceder
+                </Link>
+              </div>
+            </Card>
+
+            <Card shadow="sm" tooltip="Monitorea tus unidades y entregas en tiempo real">
+              <IconWithHover
+                BaseIcon={TruckIcon}
+                ColorIcon={colorIconMap.TruckIcon}
+                className="w-10 h-10 rounded-full flex items-center justify-center mb-3 bg-primary/10 text-primary"
+              />
+              <h2 className="card-title text-base font-semibold mb-2 text-black">Monitoreo en Tiempo Real</h2>
+              <p className="text-neutral-800 text-xs">Supervisa la ubicación y estado de tus unidades al instante.</p>
+              <div className="card-actions justify-end mt-3">
+                <Link to="/real-time-tracking" className="btn btn-primary btn-xs">
+                  Acceder
+                </Link>
+              </div>
+            </Card>
+
+            <Card shadow="sm" tooltip="Analiza y gestiona tus métricas logísticas">
+              <IconWithHover
+                BaseIcon={PresentationChartLineIcon}
+                ColorIcon={colorIconMap.PresentationChartLineIcon}
+                className="w-10 h-10 rounded-full flex items-center justify-center mb-3 bg-primary/10 text-primary"
+              />
+              <h2 className="card-title text-base font-semibold mb-2 text-black">Panel de Control Logístico</h2>
+              <p className="text-neutral-800 text-xs">Analiza métricas clave para optimizar tu operación.</p>
+              <div className="card-actions justify-end mt-3">
+                <Link to="/dashboard" className="btn btn-primary btn-xs">
+                  Acceder
+                </Link>
+              </div>
+            </Card>
+
+            <Card shadow="sm" tooltip="Simula y compara alternativas de rutas">
+              <IconWithHover
+                BaseIcon={ClockIcon}
+                ColorIcon={colorIconMap.ClockIcon}
+                className="w-10 h-10 rounded-full flex items-center justify-center mb-3 bg-primary/10 text-primary"
+              />
+              <h2 className="card-title text-base font-semibold mb-2 text-black">Simulación de Recorridos</h2>
+              <p className="text-neutral-800 text-xs">Evalúa y compara rutas antes de tomar decisiones.</p>
+              <div className="card-actions justify-end mt-3">
+                <Link to="/route-demo" className="btn btn-primary btn-xs">
+                  Acceder
+                </Link>
+              </div>
+            </Card>
+          </div>
         </div>
       </main>
     </div>

@@ -1,4 +1,5 @@
-import { MenuFirebaseService } from '../firebase/MenuFirebaseService';
+// Usamos el alias '@' definido en tsconfig.json para imports más limpios y robustos
+import { MenuFirebaseService } from "@/firebase/MenuFirebaseService";
 import { NavItem } from '../models/NavbarModel';
 
 export class MenuController {
@@ -50,12 +51,6 @@ export class MenuController {
             path: '/reports/annual'
           }
         ]
-      },
-      {
-        id: 'settings',
-        label: 'Configuración',
-        path: '/settings',
-        icon: 'settings'
       }
     ];
   }

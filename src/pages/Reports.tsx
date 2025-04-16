@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import '../styles/Reports.css';
+import ReportsBarChart from './ReportsBarChart';
+import { BanknotesIcon, UsersIcon, DocumentTextIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import clsx from 'clsx';
+
 
 interface Invoice {
   id: string;
@@ -389,89 +392,161 @@ const Reports: React.FC = () => {
     <div className="reports-container">
       <h1 className="reports-title">Reportes de Facturación</h1>
       
-      <div className="summary-cards">
-        <div className="card">
-          <div className="card-title">Total Facturado</div>
-          <div className="card-value">{formatCurrency(totalInvoiced)}</div>
-        </div>
-        <div className="card">
-          <div className="card-title">Total IVA</div>
-          <div className="card-value">{formatCurrency(totalIVA)}</div>
-        </div>
-        <div className="card">
-          <div className="card-title">Facturas Emitidas</div>
-          <div className="card-value">{invoices.length}</div>
-        </div>
-        <div className="card">
-          <div className="card-title">Clientes Activos</div>
-          <div className="card-value">{Object.keys(clientData).length}</div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+  <div className="stats bg-base-100 shadow-xl rounded-2xl">
+    <div className="stat flex flex-row items-center gap-3">
+      <BanknotesIcon className="h-8 w-8 text-green-500" />
+      <div>
+        <div className="stat-title">Total Facturado</div>
+        <div className="stat-value text-green-600">{formatCurrency(totalInvoiced)}</div>
       </div>
+    </div>
+  </div>
+  <div className="stats bg-base-100 shadow-xl rounded-2xl">
+    <div className="stat flex flex-row items-center gap-3">
+      <DocumentTextIcon className="h-8 w-8 text-pink-500" />
+      <div>
+        <div className="stat-title">Total IVA</div>
+        <div className="stat-value text-pink-600">{formatCurrency(totalIVA)}</div>
+      </div>
+    </div>
+  </div>
+  <div className="stats bg-base-100 shadow-xl rounded-2xl">
+    <div className="stat flex flex-row items-center gap-3">
+      <UsersIcon className="h-8 w-8 text-blue-500" />
+      <div>
+        <div className="stat-title">Facturas Emitidas</div>
+        <div className="stat-value text-blue-600">{invoices.length}</div>
+      </div>
+    </div>
+  </div>
+  <div className="stats bg-base-100 shadow-xl rounded-2xl">
+    <div className="stat flex flex-row items-center gap-3">
+      <UserGroupIcon className="h-8 w-8 text-purple-500" />
+      <div>
+        <div className="stat-title">Clientes Activos</div>
+        <div className="stat-value text-purple-600">{Object.keys(clientData).length}</div>
+      </div>
+    </div>
+  </div>
+</div>
       
-      <div className="reports-grid">
-        <div className="chart-container">
-          <h3>Facturación Mensual</h3>
-          {renderBarChart()}
-        </div>
-        
-        <div className="recent-invoices">
-          <h3>Facturas Recientes</h3>
-          {renderRecentInvoices()}
-        </div>
-        
-        <div className="chart-container">
-          <h3>Principales Clientes</h3>
-          {renderTopClients()}
-        </div>
-        
-        <div className="recent-invoices">
-          <h3>Métodos de Pago</h3>
-          <table className="invoices-table">
-            <thead>
-              <tr>
-                <th>Método</th>
-                <th>Cantidad</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(
-                invoices.reduce((acc: {[key: string]: {count: number, total: number}}, invoice) => {
-                  if (invoice.resumen?.pagos && invoice.resumen.pagos.length > 0) {
-                    const codigo = invoice.resumen.pagos[0].codigo || 'desconocido';
-                    if (!acc[codigo]) {
-                      acc[codigo] = { count: 0, total: 0 };
-                    }
-                    acc[codigo].count += 1;
-                    acc[codigo].total += invoice.resumen.montoTotalOperacion || 0;
-                  }
-                  return acc;
-                }, {})
-              )
-                .sort(([, a], [, b]) => b.total - a.total)
-                .map(([codigo, data]) => (
-                  <tr key={codigo}>
-                    <td>{getFormaPagoText(codigo)}</td>
-                    <td>{data.count}</td>
-                    <td>{formatCurrency(data.total)}</td>
-                  </tr>
-                ))
-              }
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+  <div className="card bg-base-100 shadow-xl p-6">
+  <h3 className="card-title mb-4 flex items-center gap-2">
+    <BanknotesIcon className="h-6 w-6 text-green-500" /> Facturación Mensual
+  </h3>
+  <ReportsBarChart data={Object.keys(monthlyData).sort((a, b) => {
+    const [monthA, yearA] = a.split('/').map(Number);
+    const [monthB, yearB] = b.split('/').map(Number);
+    if (yearA !== yearB) return yearA - yearB;
+    return monthA - monthB;
+  }).map(month => {
+    const [monthNum, year] = month.split('/');
+    const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    return {
+      month: `${monthNames[parseInt(monthNum) - 1]} ${year}`,
+      total: monthlyData[month].total
+    };
+  })} />
+</div>
+  <div className="card bg-base-100 shadow-xl p-6">
+    <h3 className="card-title mb-4">Facturas Recientes</h3>
+    <div className="overflow-x-auto">
+  <table className="table table-xs table-zebra w-full rounded-lg">
+    <thead className="bg-base-200 text-base font-semibold">
+      <tr>
+        <th>Fecha</th>
+        <th>Número</th>
+        <th>Cliente</th>
+        <th>Condición</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {invoices.slice(0, 5).map((invoice) => (
+        <tr key={invoice.id} className="text-sm">
+          <td>{formatDate(invoice.identificacion?.fecEmi || '')}</td>
+          <td>{invoice.identificacion?.numeroControl || 'N/A'}</td>
+          <td>{invoice.receptor?.nombre || 'Cliente desconocido'}</td>
+          <td>
+            <span className={clsx(
+              "badge badge-ghost font-medium",
+              invoice.resumen?.condicionOperacion === 1 ? 'badge-success' :
+              invoice.resumen?.condicionOperacion === 2 ? 'badge-info' :
+              invoice.resumen?.condicionOperacion === 3 ? 'badge-warning' :
+              'badge-ghost')}
+            >
+              {getCondicionOperacionText(invoice.resumen?.condicionOperacion || 0)}
+            </span>
+          </td>
+          <td className="font-semibold">{formatCurrency(invoice.resumen?.montoTotalOperacion || 0)}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+  </div>
+  <div className="card bg-base-100 shadow-xl p-6">
+    <h3 className="card-title mb-4">Principales Clientes</h3>
+    {renderTopClients()}
+  </div>
+  <div className="card bg-base-100 shadow-xl p-6">
+    <h3 className="card-title mb-4">Métodos de Pago</h3>
+    <table className="table table-zebra w-full rounded-lg">
+  <thead className="bg-base-200">
+    <tr>
+      <th>Método</th>
+      <th>Cantidad</th>
+      <th>Total</th>
+    </tr>
+  </thead>
+  <tbody>
+    {Object.entries(
+      invoices.reduce((acc: {[key: string]: {count: number, total: number}}, invoice) => {
+        if (invoice.resumen?.pagos && invoice.resumen.pagos.length > 0) {
+          const codigo = invoice.resumen.pagos[0].codigo || 'desconocido';
+          if (!acc[codigo]) {
+            acc[codigo] = { count: 0, total: 0 };
+          }
+          acc[codigo].count += 1;
+          acc[codigo].total += invoice.resumen.montoTotalOperacion || 0;
+        }
+        return acc;
+      }, {})
+    )
+      .sort(([, a], [, b]) => b.total - a.total)
+      .map(([codigo, data]) => (
+        <tr key={codigo}>
+          <td>
+            <span className={clsx(
+              "badge",
+              codigo === '01' ? 'badge-success' :
+              codigo === '02' ? 'badge-info' :
+              codigo === '03' ? 'badge-warning' :
+              'badge-ghost')}
+            >{getFormaPagoText(codigo)}</span>
+          </td>
+          <td>{data.count}</td>
+          <td>{formatCurrency(data.total)}</td>
+        </tr>
+      ))
+    }
+  </tbody>
+</table>
+  </div>
+</div>
       
-      <div className="last-update">
-        Última actualización: {lastUpdate}
-        <button 
-          className="refresh-button" 
-          onClick={fetchInvoices}
-          title="Actualizar datos"
-        >
-          ↻
-        </button>
-      </div>
+      <div className="flex items-center gap-3 text-sm text-base-content mt-6">
+  Última actualización: {lastUpdate}
+  <button 
+    className="btn btn-circle btn-ghost btn-sm"
+    onClick={fetchInvoices}
+    title="Actualizar datos"
+  >
+    ↻
+  </button>
+</div>
     </div>
   );
 };
